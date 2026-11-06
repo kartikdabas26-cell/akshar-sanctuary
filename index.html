@@ -1,0 +1,4187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>अक्षर — Akshar | 3D Indic Literary Sanctuary & Physical Book Experience</title>
+  <meta name="description" content="A 3D Indic Literary Sanctuary featuring a circular book mandala prelude, continuous Vasari-style physical shelf, and physical 3D two-page book opening with flippable manuscript folios.">
+
+  <!-- Google Fonts: Rozha One, Noto Serif Devanagari, Cinzel Decorative, Cinzel, Plus Jakarta Sans, Inter Tight -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Inter+Tight:wght@500;600;700&family=Noto+Serif+Devanagari:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Rozha+One&family=Yatra+One&display=swap" rel="stylesheet">
+
+  <!-- Three.js (r160) from Cloudflare CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       1. GLOBAL RESET & ANCIENT PARCHMENT CSS VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-dark: #0a0806;
+      --parchment-base: #dfcfb2;
+      --parchment-aged: #c4ad87;
+      --parchment-deep: #8c6f48;
+      --burnt-edge: #2c1d11;
+      --ink-black: #14100c;
+      --gold-primary: #d4a34b;
+      --gold-bright: #fcd34d;
+      --gold-deep: #92641a;
+      --vermilion: #b93815;
+      --saffron: #d97706;
+      --font-devanagari-hero: 'Rozha One', serif;
+      --font-devanagari-body: 'Noto Serif Devanagari', serif;
+      --font-serif-roman: 'Cinzel', serif;
+      --font-decorative-roman: 'Cinzel Decorative', serif;
+      --font-ui: 'Plus Jakarta Sans', sans-serif;
+      --font-mono-lbl: 'Inter Tight', sans-serif;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--ink-black);
+      font-family: var(--font-ui);
+      position: relative;
+    }
+
+    @media (pointer: fine) {
+      html, body, button, a {
+        cursor: none !important;
+      }
+    }
+
+    /* ==========================================================================
+       2. REALISTIC CRINKLED ANCIENT MANUSCRIPT PARCHMENT BACKGROUND
+       ========================================================================== */
+    #parchment-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.96;
+    }
+
+    .parchment-vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(223, 207, 178, 0.04) 0%, rgba(92, 64, 34, 0.35) 60%, rgba(20, 14, 8, 0.92) 100%),
+        radial-gradient(circle at 15% 20%, rgba(185, 56, 21, 0.08), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(212, 163, 75, 0.08), transparent 45%);
+      mix-blend-mode: multiply;
+    }
+
+    .parchment-edges {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      box-shadow: 
+        inset 0 0 130px rgba(18, 12, 7, 0.96),
+        inset 0 0 50px rgba(44, 29, 17, 0.82),
+        inset 0 0 15px rgba(140, 111, 72, 0.55);
+    }
+
+    #webgl-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 4;
+      outline: none;
+      touch-action: pan-y;
+    }
+
+    /* ==========================================================================
+       3. LANDING PAGE OVERLAY (MANDALA CIRCLE PRELUDE)
+       ========================================================================== */
+    .landing-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      transition: opacity 1.2s var(--ease), visibility 1.2s ease;
+    }
+
+    .landing-overlay.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .landing-center-orb {
+      position: relative;
+      width: clamp(200px, 24vw, 280px);
+      height: clamp(200px, 24vw, 280px);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 30;
+      transition: transform 0.6s var(--ease);
+    }
+
+    .landing-center-orb:hover {
+      transform: scale(1.08);
+    }
+
+    /* Concentric Yantra Rings */
+    .yantra-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed rgba(212, 163, 75, 0.35);
+      pointer-events: none;
+      animation: rotateRings 60s linear infinite;
+    }
+
+    .ring-1 { inset: 0px; border-style: solid; border-color: rgba(185, 56, 21, 0.45); }
+    .ring-2 { inset: -18px; border-width: 1.5px; animation-duration: 45s; animation-direction: reverse; }
+    .ring-3 { inset: -36px; border-style: dotted; border-color: rgba(245, 158, 11, 0.4); animation-duration: 80s; }
+
+    @keyframes rotateRings {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .landing-akshar-glyph {
+      font-family: var(--font-devanagari-hero);
+      font-size: clamp(5.2rem, 11vw, 8.5rem);
+      line-height: 0.85;
+      color: #fffaf0;
+      background: linear-gradient(180deg, #fcd34d 0%, #ea580c 70%, #991b1b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 4px 35px rgba(217, 119, 6, 0.65);
+      letter-spacing: -0.02em;
+      filter: drop-shadow(0 2px 14px rgba(20, 10, 5, 0.8));
+      transition: all 0.5s ease;
+    }
+
+    .landing-center-orb:hover .landing-akshar-glyph {
+      filter: drop-shadow(0 0 30px rgba(252, 211, 77, 0.9));
+      transform: scale(1.05);
+    }
+
+    .landing-tagline {
+      font-family: var(--font-decorative-roman);
+      font-size: clamp(0.7rem, 1vw, 0.9rem);
+      letter-spacing: 0.38em;
+      color: #dfceb3;
+      text-transform: uppercase;
+      margin-top: 10px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .landing-cta-pill {
+      margin-top: 50px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 28px;
+      border-radius: 40px;
+      background: rgba(24, 16, 10, 0.85);
+      border: 1.5px solid rgba(212, 163, 75, 0.5);
+      color: var(--gold-bright);
+      font-family: var(--font-serif-roman);
+      font-size: 0.86rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75), inset 0 0 14px rgba(212, 163, 75, 0.25);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .landing-cta-pill:hover {
+      background: linear-gradient(135deg, var(--vermilion) 0%, var(--saffron) 100%);
+      border-color: #fef08a;
+      color: #120d08;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(217, 119, 6, 0.6);
+    }
+
+    /* ==========================================================================
+       4. TOP HUD & SANCTUM NAVIGATION BAR
+       ========================================================================== */
+    .top-sanctum-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 36px;
+      pointer-events: auto;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+    }
+
+    .brand-sigil {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(180, 135, 65, 0.45);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-devanagari-hero);
+      font-size: 1.5rem;
+      color: var(--gold-primary);
+      background: radial-gradient(circle, rgba(120, 80, 30, 0.25), rgba(15, 10, 6, 0.65));
+      box-shadow: 0 0 16px rgba(212, 163, 75, 0.25), inset 0 0 8px rgba(212, 163, 75, 0.15);
+      position: relative;
+    }
+
+    .brand-sigil::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 1px dashed rgba(180, 135, 65, 0.25);
+      border-radius: 50%;
+      animation: rotateRings 40s linear infinite;
+    }
+
+    .brand-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-family: var(--font-decorative-roman);
+      font-size: 1.15rem;
+      letter-spacing: 0.18em;
+      color: #ede2cd;
+      font-weight: 700;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    }
+
+    .brand-tagline {
+      font-family: var(--font-serif-roman);
+      font-size: 0.68rem;
+      letter-spacing: 0.25em;
+      color: #ad9372;
+      text-transform: uppercase;
+    }
+
+    .sanctum-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-sacred {
+      background: rgba(30, 22, 14, 0.7);
+      border: 1px solid rgba(180, 135, 65, 0.35);
+      color: #dfceb3;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-family: var(--font-serif-roman);
+      font-size: 0.78rem;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s var(--ease);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+
+    .btn-sacred:hover {
+      background: rgba(56, 38, 22, 0.85);
+      border-color: var(--gold-primary);
+      color: var(--gold-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212, 163, 75, 0.25);
+    }
+
+    .audio-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 12px;
+    }
+
+    .audio-bar {
+      width: 2px;
+      background: var(--gold-primary);
+      height: 30%;
+      transition: height 0.2s ease;
+    }
+
+    .audio-playing .audio-bar:nth-child(1) { animation: bounceBar 1.2s infinite 0.1s; }
+    .audio-playing .audio-bar:nth-child(2) { animation: bounceBar 1.2s infinite 0.3s; }
+    .audio-playing .audio-bar:nth-child(3) { animation: bounceBar 1.2s infinite 0.2s; }
+    .audio-playing .audio-bar:nth-child(4) { animation: bounceBar 1.2s infinite 0.4s; }
+
+    @keyframes bounceBar {
+      0%, 100% { height: 25%; }
+      50% { height: 100%; }
+    }
+
+    /* ==========================================================================
+       5. ERA TABS & SLIDING INDICATOR (FOR SHELF VIEW)
+       ========================================================================== */
+    .era-tabs-container {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 22;
+      display: flex;
+      align-items: center;
+      background: rgba(26, 18, 12, 0.75);
+      border: 1px solid rgba(180, 135, 65, 0.4);
+      border-radius: 4px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s var(--ease);
+    }
+
+    .era-tabs-container.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .era-tab-indicator {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, var(--saffron) 0%, var(--gold-primary) 100%);
+      border-radius: 3px;
+      transition: all 0.55s var(--ease);
+      pointer-events: none;
+      box-shadow: 0 0 15px rgba(217, 119, 6, 0.45);
+    }
+
+    .era-tab-btn {
+      position: relative;
+      background: transparent;
+      border: none;
+      padding: 8px 18px;
+      color: #c9b79c;
+      font-family: var(--font-mono-lbl);
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.4s var(--ease);
+      white-space: nowrap;
+      z-index: 2;
+    }
+
+    .era-tab-btn.active {
+      color: #120d08;
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       6. SHELF CAPTION & ARROWS
+       ========================================================================== */
+    .shelf-caption-container {
+      position: absolute;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      pointer-events: none;
+      width: min(92vw, 820px);
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.8s var(--ease);
+    }
+
+    .shelf-caption-container.active {
+      opacity: 1;
+    }
+
+    .caption-mask {
+      overflow: hidden;
+      width: 100%;
+      position: relative;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .caption-mask.sub-mask { height: 24px; }
+    .caption-mask.meta-mask { height: 20px; }
+
+    .caption-item {
+      position: absolute;
+      width: 100%;
+      left: 0;
+      transition: transform 0.65s var(--ease);
+    }
+
+    .caption-title {
+      font-family: var(--font-devanagari-hero);
+      font-size: clamp(2rem, 3.8vw, 3rem);
+      color: #faebd7;
+      line-height: 1;
+      text-shadow: 0 2px 14px rgba(212, 163, 75, 0.35);
+    }
+
+    .caption-subtitle {
+      font-family: var(--font-serif-roman);
+      font-size: 0.88rem;
+      letter-spacing: 0.22em;
+      color: var(--gold-bright);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .caption-meta {
+      font-family: var(--font-mono-lbl);
+      font-size: 0.74rem;
+      letter-spacing: 0.18em;
+      color: #bfa888;
+      text-transform: uppercase;
+    }
+
+    .shelf-nav-arrows {
+      position: absolute;
+      bottom: 114px;
+      left: 36px;
+      right: 36px;
+      z-index: 21;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s var(--ease);
+    }
+
+    .shelf-nav-arrows.active {
+      opacity: 1;
+    }
+
+    .arrow-btn {
+      pointer-events: auto;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(30, 22, 14, 0.75);
+      border: 1px solid rgba(180, 135, 65, 0.4);
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+      transition: all 0.3s var(--ease);
+    }
+
+    .arrow-btn:hover {
+      background: var(--saffron);
+      color: #120d08;
+      transform: scale(1.1);
+      box-shadow: 0 6px 25px rgba(217, 119, 6, 0.5);
+    }
+
+    /* ==========================================================================
+       7. PHYSICAL 3D OPEN BOOK HUD OVERLAY
+       ========================================================================== */
+    .book-reader-hud {
+      position: absolute;
+      inset: 0;
+      z-index: 35;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s var(--ease);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 30px 40px;
+    }
+
+    .book-reader-hud.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .reader-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .reader-book-tag {
+      font-family: var(--font-decorative-roman);
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      color: var(--gold-bright);
+      text-transform: uppercase;
+      background: rgba(24, 16, 10, 0.85);
+      border: 1px solid rgba(180, 135, 65, 0.4);
+      padding: 8px 18px;
+      border-radius: 30px;
+      backdrop-filter: blur(8px);
+    }
+
+    .reader-close-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(28, 18, 12, 0.85);
+      border: 1.5px solid var(--gold-primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+      transition: all 0.3s var(--ease);
+    }
+
+    .reader-close-btn:hover {
+      background: var(--vermilion);
+      border-color: #fff;
+      transform: rotate(90deg) scale(1.1);
+    }
+
+    .reader-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .reader-flip-btn {
+      background: rgba(28, 18, 12, 0.85);
+      border: 1px solid rgba(180, 135, 65, 0.4);
+      color: var(--gold-bright);
+      font-family: var(--font-serif-roman);
+      font-size: 0.82rem;
+      letter-spacing: 0.18em;
+      padding: 10px 22px;
+      border-radius: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s var(--ease);
+    }
+
+    .reader-flip-btn:hover:not(:disabled) {
+      background: var(--saffron);
+      color: #120d08;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5);
+    }
+
+    .reader-flip-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .reader-page-indicator {
+      font-family: var(--font-mono-lbl);
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      color: #c4ad87;
+      text-transform: uppercase;
+      background: rgba(20, 14, 8, 0.85);
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(180, 135, 65, 0.3);
+    }
+
+    /* ==========================================================================
+       8. CUSTOM CURSOR
+       ========================================================================== */
+    .custom-cursor {
+      position: fixed;
+      width: 58px;
+      height: 58px;
+      margin-left: -29px;
+      margin-top: -29px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(212, 163, 75, 0.7);
+      background: transparent;
+      pointer-events: none;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: width 0.35s var(--ease), height 0.35s var(--ease), margin 0.35s var(--ease), background 0.35s var(--ease), border-color 0.35s var(--ease);
+      opacity: 0;
+    }
+
+    .cursor-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--gold-bright);
+      border-radius: 50%;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .cursor-label {
+      font-family: var(--font-mono-lbl);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #120d08;
+      line-height: 1.15;
+      text-align: center;
+      transform: scale(0);
+      transition: transform 0.3s var(--ease);
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .custom-cursor.state-spine {
+      width: 38px;
+      height: 38px;
+      margin-left: -19px;
+      margin-top: -19px;
+      border-color: var(--saffron);
+    }
+
+    .custom-cursor.state-open {
+      width: 84px;
+      height: 84px;
+      margin-left: -42px;
+      margin-top: -42px;
+      background: linear-gradient(135deg, var(--vermilion) 0%, var(--saffron) 100%);
+      border-color: var(--gold-bright);
+      box-shadow: 0 0 30px rgba(217, 119, 6, 0.6);
+    }
+
+    .custom-cursor.state-open .cursor-dot {
+      transform: scale(0);
+      opacity: 0;
+    }
+
+    .custom-cursor.state-open .cursor-label {
+      transform: scale(1);
+      color: #faebd7;
+    }
+
+    /* Bottom HUD */
+    .bottom-hud {
+      position: absolute;
+      bottom: 24px;
+      left: 36px;
+      right: 36px;
+      z-index: 20;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s var(--ease);
+    }
+
+    .bottom-hud.active {
+      opacity: 1;
+    }
+
+    .instruction-badge {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(22, 16, 10, 0.75);
+      border: 1px solid rgba(160, 120, 60, 0.3);
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: #cfbe9f;
+      font-size: 0.78rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+    }
+
+    .volume-counter {
+      pointer-events: auto;
+      text-align: right;
+      color: #ad9372;
+      font-family: var(--font-decorative-roman);
+    }
+
+    .volume-num {
+      font-size: 1.8rem;
+      color: #ede2cd;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .volume-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    /* Loading curtain */
+    #loading-curtain {
+      position: absolute;
+      inset: 0;
+      z-index: 999;
+      background-color: #0b0907;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.8s var(--ease), visibility 0.8s ease;
+    }
+
+    #loading-curtain.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-shloka {
+      font-family: var(--font-devanagari-hero);
+      font-size: 3.5rem;
+      color: var(--gold-bright);
+      text-shadow: 0 0 25px rgba(212, 163, 75, 0.6);
+      animation: pulseGold 2s infinite ease-in-out;
+    }
+
+    .loader-sub {
+      font-family: var(--font-serif-roman);
+      font-size: 0.85rem;
+      letter-spacing: 0.35em;
+      color: #ad9372;
+      text-transform: uppercase;
+    }
+
+    .loader-bar-track {
+      width: 220px;
+      height: 2px;
+      background: rgba(180, 135, 65, 0.2);
+      position: relative;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+
+    .loader-bar-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: var(--gold-primary);
+      transition: width 0.3s ease;
+    }
+
+    @keyframes pulseGold {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.35); opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .top-sanctum-bar { padding: 16px 20px; }
+      .era-tabs-container { top: 80px; }
+      .era-tab-btn { padding: 6px 12px; font-size: 0.68rem; }
+      .bottom-hud { left: 20px; right: 20px; bottom: 16px; }
+      .shelf-nav-arrows { left: 16px; right: 16px; bottom: 120px; }
+      .instruction-badge { font-size: 0.7rem; padding: 8px 14px; }
+      .book-reader-hud { padding: 20px; }
+      .sanctum-controls .btn-sacred span { display: none; }
+      .sanctum-controls .btn-sacred { padding: 8px 12px; }
+    }
+
+    /* ==========================================================================
+       MODAL OVERLAYS (CATALOG, AUTHORS, COPYRIGHT & COLOPHON)
+       ========================================================================== */
+    .sanctum-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(10, 8, 6, 0.86);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s var(--ease);
+    }
+
+    .sanctum-modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sanctum-modal-container {
+      background: linear-gradient(165deg, rgba(28, 20, 14, 0.96) 0%, rgba(18, 12, 8, 0.98) 100%);
+      border: 1px solid rgba(212, 163, 75, 0.4);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 1060px;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 235, 180, 0.15);
+      position: relative;
+      overflow: hidden;
+      transform: scale(0.95) translateY(12px);
+      transition: transform 0.4s var(--ease);
+    }
+
+    .sanctum-modal-backdrop.active .sanctum-modal-container {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      padding: 24px 32px 18px;
+      border-bottom: 1px solid rgba(180, 135, 65, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      background: rgba(20, 14, 10, 0.6);
+    }
+
+    .modal-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .modal-title-dev {
+      font-family: var(--font-devanagari-hero);
+      font-size: 2rem;
+      color: var(--gold-bright);
+      line-height: 1.1;
+      text-shadow: 0 0 15px rgba(212, 163, 75, 0.4);
+    }
+
+    .modal-subtitle {
+      font-family: var(--font-serif-roman);
+      font-size: 0.8rem;
+      letter-spacing: 0.25em;
+      color: #bfa888;
+      text-transform: uppercase;
+    }
+
+    .modal-close-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(36, 24, 16, 0.8);
+      border: 1px solid rgba(180, 135, 65, 0.4);
+      color: #ede2cd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s var(--ease);
+    }
+
+    .modal-close-btn:hover {
+      background: var(--vermilion);
+      color: #fff;
+      transform: rotate(90deg) scale(1.08);
+      border-color: #fff;
+    }
+
+    .modal-toolbar {
+      padding: 14px 32px;
+      background: rgba(14, 10, 6, 0.5);
+      border-bottom: 1px solid rgba(180, 135, 65, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .modal-search-box {
+      flex: 1;
+      min-width: 240px;
+      position: relative;
+    }
+
+    .modal-search-input {
+      width: 100%;
+      background: rgba(24, 16, 10, 0.8);
+      border: 1px solid rgba(180, 135, 65, 0.35);
+      padding: 10px 16px 10px 38px;
+      border-radius: 6px;
+      color: #f5eedf;
+      font-family: var(--font-mono-lbl);
+      font-size: 0.82rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .modal-search-input:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 15px rgba(212, 163, 75, 0.25);
+    }
+
+    .modal-search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #ad9372;
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    .modal-filter-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-pill {
+      background: rgba(30, 20, 12, 0.6);
+      border: 1px solid rgba(180, 135, 65, 0.3);
+      color: #bfa888;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-family: var(--font-mono-lbl);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.25s var(--ease);
+      text-transform: uppercase;
+    }
+
+    .filter-pill:hover, .filter-pill.active {
+      background: linear-gradient(135deg, var(--saffron) 0%, var(--gold-primary) 100%);
+      color: #120d08;
+      font-weight: 700;
+      border-color: var(--gold-bright);
+      box-shadow: 0 2px 10px rgba(217, 119, 6, 0.4);
+    }
+
+    .modal-body {
+      padding: 24px 32px 36px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .modal-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .modal-body::-webkit-scrollbar-track {
+      background: rgba(14, 10, 6, 0.5);
+    }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: rgba(180, 135, 65, 0.4);
+      border-radius: 3px;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover {
+      background: var(--gold-primary);
+    }
+
+    /* Catalog Cards Grid */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 18px;
+    }
+
+    .catalog-card {
+      background: rgba(24, 16, 12, 0.75);
+      border: 1px solid rgba(180, 135, 65, 0.3);
+      border-radius: 8px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: all 0.35s var(--ease);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .catalog-card:hover {
+      background: rgba(36, 24, 16, 0.95);
+      border-color: var(--gold-bright);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 163, 75, 0.2);
+    }
+
+    .catalog-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .catalog-vol-badge {
+      font-family: var(--font-mono-lbl);
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(180, 135, 65, 0.25);
+    }
+
+    .catalog-era-badge {
+      font-family: var(--font-mono-lbl);
+      font-size: 0.65rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+
+    .catalog-card-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .catalog-title-dev {
+      font-family: var(--font-devanagari-hero);
+      font-size: 1.5rem;
+      color: #fffbeb;
+      line-height: 1.2;
+    }
+
+    .catalog-title-en {
+      font-family: var(--font-serif-roman);
+      font-size: 0.78rem;
+      letter-spacing: 0.15em;
+      color: var(--saffron);
+      text-transform: uppercase;
+    }
+
+    .catalog-author {
+      font-family: var(--font-sans-body);
+      font-size: 0.82rem;
+      color: #d1b894;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .catalog-excerpt {
+      font-family: var(--font-devanagari-body);
+      font-size: 0.82rem;
+      color: #9e8e76;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .catalog-read-btn {
+      align-self: flex-start;
+      background: rgba(30, 20, 12, 0.8);
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-bright);
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-family: var(--font-serif-roman);
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s var(--ease);
+      text-transform: uppercase;
+    }
+
+    .catalog-read-btn:hover {
+      background: var(--gold-primary);
+      color: #120d08;
+      font-weight: 700;
+      box-shadow: 0 2px 10px rgba(212, 163, 75, 0.4);
+    }
+
+    /* Authors Grid */
+    .authors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 20px;
+    }
+
+    .author-card {
+      background: rgba(24, 16, 12, 0.75);
+      border: 1px solid rgba(180, 135, 65, 0.3);
+      border-radius: 8px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.35s var(--ease);
+      position: relative;
+    }
+
+    .author-card:hover {
+      background: rgba(36, 24, 16, 0.95);
+      border-color: var(--gold-bright);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    }
+
+    .author-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .author-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(185, 56, 21, 0.8) 0%, rgba(217, 119, 6, 0.8) 100%);
+      border: 2px solid var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-devanagari-hero);
+      font-size: 1.5rem;
+      color: #fffbeb;
+      box-shadow: 0 0 15px rgba(217, 119, 6, 0.4);
+      flex-shrink: 0;
+    }
+
+    .author-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .author-name-dev {
+      font-family: var(--font-devanagari-hero);
+      font-size: 1.35rem;
+      color: #ede2cd;
+      line-height: 1.1;
+    }
+
+    .author-name-en {
+      font-family: var(--font-serif-roman);
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+    }
+
+    .author-honorific {
+      font-family: var(--font-mono-lbl);
+      font-size: 0.68rem;
+      color: #bfa888;
+      font-style: italic;
+    }
+
+    .author-era-tag {
+      font-family: var(--font-mono-lbl);
+      font-size: 0.66rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .author-bio {
+      font-family: var(--font-devanagari-body);
+      font-size: 0.84rem;
+      color: #c4b59d;
+      line-height: 1.5;
+    }
+
+    .author-works-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-top: 1px dashed rgba(180, 135, 65, 0.25);
+      padding-top: 12px;
+    }
+
+    .author-works-label {
+      font-family: var(--font-serif-roman);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+    }
+
+    .author-works-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .author-work-pill {
+      background: rgba(30, 20, 12, 0.8);
+      border: 1px solid rgba(180, 135, 65, 0.35);
+      color: #e2e8f0;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-family: var(--font-devanagari-hero);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .author-work-pill:hover {
+      background: var(--saffron);
+      color: #120d08;
+      border-color: var(--gold-bright);
+      transform: translateY(-1px);
+    }
+
+    /* Copyright & Colophon Styling */
+    .colophon-card {
+      background: rgba(22, 16, 12, 0.8);
+      border: 1px solid rgba(180, 135, 65, 0.4);
+      border-radius: 8px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      color: #c9bca6;
+      line-height: 1.6;
+    }
+
+    .colophon-top-crest {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      border-bottom: 1px solid rgba(180, 135, 65, 0.3);
+      padding-bottom: 20px;
+    }
+
+    .colophon-om-sigil {
+      font-family: var(--font-devanagari-hero);
+      font-size: 3rem;
+      color: var(--gold-bright);
+      text-shadow: 0 0 20px rgba(212, 163, 75, 0.5);
+    }
+
+    .colophon-section-title {
+      font-family: var(--font-devanagari-hero);
+      font-size: 1.4rem;
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .colophon-box {
+      background: rgba(14, 10, 6, 0.6);
+      border: 1px solid rgba(180, 135, 65, 0.25);
+      border-radius: 6px;
+      padding: 16px 20px;
+      font-size: 0.86rem;
+    }
+
+    .colophon-grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .colophon-grid-two { grid-template-columns: 1fr; }
+    }
+
+    .colophon-meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .colophon-meta-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(180, 135, 65, 0.15);
+    }
+
+    .colophon-meta-table td:first-child {
+      font-family: var(--font-serif-roman);
+      color: var(--gold-primary);
+      letter-spacing: 0.1em;
+      width: 38%;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Curtain -->
+  <div id="loading-curtain">
+    <div class="loader-shloka">अक्षर</div>
+    <div class="loader-sub">Illuminating Classical Archives</div>
+    <div class="loader-bar-track">
+      <div id="loader-fill" class="loader-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- Custom Adaptive Cursor -->
+  <div class="custom-cursor" id="custom-cursor">
+    <div class="cursor-dot"></div>
+    <div class="cursor-label">
+      <span>OPEN</span>
+      <span style="font-size: 8px; font-family: var(--font-devanagari-hero);">खोलें</span>
+    </div>
+  </div>
+
+  <!-- Background 2D Procedural Crinkled & Aged Parchment Canvas -->
+  <canvas id="parchment-canvas"></canvas>
+
+  <!-- Ambient Paper Overlays -->
+  <div class="parchment-vignette"></div>
+  <div class="parchment-edges"></div>
+
+  <!-- STATE 0: LANDING PAGE MANDALA OVERLAY -->
+  <div class="landing-overlay" id="landing-overlay">
+    <div class="landing-center-orb" id="landing-akshar-orb" title="Touch Akshar to Awaken Sanctuary">
+      <div class="landing-akshar-glyph">अक्षर</div>
+      <div class="landing-tagline">THE IMPERISHABLE SANCTUARY</div>
+    </div>
+
+    <div class="landing-cta-pill" id="landing-cta-btn">
+      <span>✦</span>
+      <span>ENTER ARCHIVES • अक्षरम् स्पन्दय</span>
+      <span>✦</span>
+    </div>
+  </div>
+
+  <!-- Top Sanctum Navigation Bar -->
+  <header class="top-sanctum-bar">
+    <div class="brand-mark" id="btn-home">
+      <div class="brand-sigil">ॐ</div>
+      <div class="brand-meta">
+        <span class="brand-title">AKSHAR</span>
+        <span class="brand-tagline">3D Physical Sanctuary</span>
+      </div>
+    </div>
+
+    <div class="sanctum-controls">
+      <button class="btn-sacred" id="btn-catalog" title="Browse Complete 32-Volume Visual Catalog">
+        <span style="color: var(--gold-bright);">✦</span>
+        <span>Catalog / सूची</span>
+      </button>
+
+      <button class="btn-sacred" id="btn-authors" title="Meet the Classical & Modern Authors">
+        <span style="color: var(--saffron);">✦</span>
+        <span>Authors / रचनाकार</span>
+      </button>
+
+      <button class="btn-sacred" id="btn-copyright" title="Archival Colophon & Copyright Information">
+        <span>Colophon & Rights / स्वत्व</span>
+      </button>
+
+      <button class="btn-sacred" id="btn-audio" title="Toggle Meditative Tanpura Drone">
+        <div class="audio-bars" id="audio-bars">
+          <div class="audio-bar"></div>
+          <div class="audio-bar"></div>
+          <div class="audio-bar"></div>
+          <div class="audio-bar"></div>
+        </div>
+        <span id="audio-btn-label">Sound On</span>
+      </button>
+
+      <button class="btn-sacred" id="btn-mandala-view" title="Return to Celestial Mandala">
+        <span>Mandala Orbit</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Era Navigation Tabs (Shelf Mode) -->
+  <nav class="era-tabs-container" id="era-tabs" aria-label="Literary Eras">
+    <div class="era-tab-indicator" id="era-tab-indicator"></div>
+    <button class="era-tab-btn active" data-era="all">ALL / समग्र</button>
+    <button class="era-tab-btn" data-era="vedic">VEDIC / वैदिक</button>
+    <button class="era-tab-btn" data-era="classical">CLASSICAL / शास्त्रीय</button>
+    <button class="era-tab-btn" data-era="modern">MODERN / आधुनिक</button>
+  </nav>
+
+  <!-- Three.js 3D WebGL Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Navigation Arrows (Shelf Mode) -->
+  <div class="shelf-nav-arrows" id="shelf-arrows">
+    <button class="arrow-btn" id="arrow-prev" title="Previous Volume (Left Arrow)">❮</button>
+    <button class="arrow-btn" id="arrow-next" title="Next Volume (Right Arrow)">❯</button>
+  </div>
+
+  <!-- Sliding Caption System Below Shelf -->
+  <div class="shelf-caption-container" id="shelf-caption" aria-live="polite">
+    <div class="caption-mask">
+      <div class="caption-item caption-title" id="cap-title">मेघदूतम्</div>
+    </div>
+    <div class="caption-mask sub-mask">
+      <div class="caption-item caption-subtitle" id="cap-sub">MEGHADŪTAM • महाकवि कालिदास</div>
+    </div>
+    <div class="caption-mask meta-mask">
+      <div class="caption-item caption-meta" id="cap-meta">CLASSICAL SANSKRIT KAVYA • c. 4TH CENTURY CE</div>
+    </div>
+  </div>
+
+  <!-- Bottom HUD (Shelf Mode) -->
+  <footer class="bottom-hud" id="shelf-bottom-hud">
+    <div class="instruction-badge">
+      <span style="color: var(--gold-bright);">✦</span>
+      <span>Click any spine to center • Drag or scroll shelf • Click active book to open 3D pages</span>
+      <span style="opacity: 0.35;">|</span>
+      <button id="bottom-colophon-link" style="background: none; border: none; color: var(--gold-primary); cursor: pointer; font-family: inherit; font-size: inherit; text-decoration: underline; padding: 0 4px;" title="View Copyright & Colophon">© Colophon & Copyright</button>
+    </div>
+    <div class="volume-counter">
+      <div class="volume-num" id="current-volume-indicator">01 / 32</div>
+      <div class="volume-label" id="current-volume-genre">Classical Kavya</div>
+    </div>
+  </footer>
+
+  <!-- STATE 2: 3D BOOK READING HUD OVERLAY -->
+  <div class="book-reader-hud" id="book-reader-hud">
+    <div class="reader-top-bar">
+      <div class="reader-book-tag" id="reader-book-tag">GRANTHALAYA VOL. 01 • SANSKRIT</div>
+      <button class="reader-close-btn" id="reader-close-btn" title="Close Book & Return to Shelf (Esc)">✕</button>
+    </div>
+
+    <div class="reader-bottom-bar">
+      <button class="reader-flip-btn" id="btn-page-prev" disabled>
+        <span>❮</span>
+        <span>PREVIOUS FOLIO / पूर्व पृष्ठम्</span>
+      </button>
+
+      <div class="reader-page-indicator" id="reader-page-indicator">
+        FOLIO 1 OF 3 • INVOCATION
+      </div>
+
+      <button class="reader-flip-btn" id="btn-page-next">
+        <span>NEXT FOLIO / उत्तर पृष्ठम्</span>
+        <span>❯</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 1: MASTER VISUAL CATALOG & SEARCH
+       ========================================================================== -->
+  <div class="sanctum-modal-backdrop" id="modal-catalog" role="dialog" aria-modal="true" aria-labelledby="catalog-modal-title">
+    <div class="sanctum-modal-container">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-title-dev" id="catalog-modal-title">सम्पूर्ण ग्रन्थ-सूची</div>
+          <div class="modal-subtitle">Master 32-Volume Indic Literary Archive</div>
+        </div>
+        <button class="modal-close-btn" data-close="modal-catalog" title="Close (Esc)">✕</button>
+      </div>
+
+      <div class="modal-toolbar">
+        <div class="modal-search-box">
+          <span class="modal-search-icon">🔍</span>
+          <input type="text" id="catalog-search-input" class="modal-search-input" placeholder="Search volumes by title (Sanskrit/English), author, genre..." />
+        </div>
+        <div class="modal-filter-pills" id="catalog-filter-pills">
+          <button class="filter-pill active" data-filter="all">All / समग्र (32)</button>
+          <button class="filter-pill" data-filter="vedic">Vedic / वैदिक</button>
+          <button class="filter-pill" data-filter="classical">Classical / शास्त्रीय</button>
+          <button class="filter-pill" data-filter="modern">Modern / आधुनिक</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="catalog-grid" id="catalog-cards-container">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: AUTHORS SHOWCASE & BIOGRAPHIES
+       ========================================================================== -->
+  <div class="sanctum-modal-backdrop" id="modal-authors" role="dialog" aria-modal="true" aria-labelledby="authors-modal-title">
+    <div class="sanctum-modal-container">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-title-dev" id="authors-modal-title">रचयितारः • THE ETERNAL AUTHORS</div>
+          <div class="modal-subtitle">The Rishis, Acharyas, and Literary Architects of Indic Civilization</div>
+        </div>
+        <button class="modal-close-btn" data-close="modal-authors" title="Close (Esc)">✕</button>
+      </div>
+
+      <div class="modal-toolbar">
+        <div class="modal-search-box">
+          <span class="modal-search-icon">🔍</span>
+          <input type="text" id="authors-search-input" class="modal-search-input" placeholder="Search authors by name, epithet, era, or tradition..." />
+        </div>
+        <div class="modal-filter-pills" id="authors-filter-pills">
+          <button class="filter-pill active" data-author-filter="all">All Masters / समग्र</button>
+          <button class="filter-pill" data-author-filter="vedic">Rishis & Sages</button>
+          <button class="filter-pill" data-author-filter="classical">Classical Kavya</button>
+          <button class="filter-pill" data-author-filter="modern">Modern Pioneers</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="authors-grid" id="authors-cards-container">
+          <!-- Dynamically populated with author biographies & works -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: COPYRIGHT, OPEN HERITAGE & COLOPHON
+       ========================================================================== -->
+  <div class="sanctum-modal-backdrop" id="modal-copyright" role="dialog" aria-modal="true" aria-labelledby="copyright-modal-title">
+    <div class="sanctum-modal-container">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-title-dev" id="copyright-modal-title">ग्रन्थ-स्वत्व एवं मुद्रण विवरण</div>
+          <div class="modal-subtitle">Colophon, Intellectual Property & Archival Provenance</div>
+        </div>
+        <button class="modal-close-btn" data-close="modal-copyright" title="Close (Esc)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="colophon-card">
+          <div class="colophon-top-crest">
+            <div class="colophon-om-sigil">ॐ</div>
+            <div>
+              <div style="font-family: var(--font-devanagari-hero); font-size: 1.8rem; color: #fffbeb;">अक्षर ग्रन्थागार • AKSHAR DIGITAL SANCTUARY</div>
+              <div style="font-family: var(--font-serif-roman); font-size: 0.85rem; letter-spacing: 0.25em; color: var(--gold-primary); text-transform: uppercase;">Imperishable Indic Literary Heritage Archive</div>
+            </div>
+          </div>
+
+          <!-- Section 1: Copyright & Heritage Licensing -->
+          <div>
+            <div class="colophon-section-title">
+              <span>✦</span>
+              <span>ग्रन्थ-स्वत्व एवं अधिकार घोषणा / Copyright & Heritage License</span>
+            </div>
+            <div class="colophon-box">
+              <p style="margin-bottom: 12px;">
+                <strong>1. Classical Ancient Texts & Public Domain (सार्वजनिक ग्रन्थ):</strong>
+                All ancient Sanskrit Vedic Samhitas, Aranyakas, Upanishads, Epics (Ramayana, Mahabharata), philosophical Sutras, and Classical Kavya masterpieces curated in this sanctuary are historical treasures in the <strong>Public Domain (सार्वजनिक धरोहर)</strong> worldwide under international copyright treaties.
+              </p>
+              <p style="margin-bottom: 12px;">
+                <strong>2. Modern Creative Commons License (CC BY-NC-SA 4.0):</strong>
+                The original Hindi introductions, literary commentaries, modern Sanskrit transliterations, and English translations created specifically for the Akshar Sanctuary are licensed under the <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" style="color: var(--gold-bright); text-decoration: underline;">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)</a>. You are free to read, share, and study them for non-commercial educational purposes.
+              </p>
+              <p>
+                <strong>3. Digital Preservation & Scholarly Exemption:</strong>
+                Modern 20th-century literary works (e.g., Godaan, Kamayani, Rashmirathi, Madhushala) are presented under international archival and educational fair-use doctrines for non-commercial cultural preservation and academic appreciation.
+              </p>
+            </div>
+          </div>
+
+          <!-- Section 2: Colophon Metadata & Typography -->
+          <div class="colophon-grid-two">
+            <div>
+              <div class="colophon-section-title">
+                <span>✦</span>
+                <span>मुद्रण विवरण / Typographic Colophon</span>
+              </div>
+              <table class="colophon-meta-table">
+                <tr>
+                  <td>Edition</td>
+                  <td>Digital Grand Folio First Edition (ग्रन्थालङ्कार प्रथम संस्करण)</td>
+                </tr>
+                <tr>
+                  <td>Devanagari Display</td>
+                  <td><em>Rozha One</em> (Tim Donaldson & Jyotish Sonowal)</td>
+                </tr>
+                <tr>
+                  <td>Body Typography</td>
+                  <td><em>Noto Serif Devanagari</em> & <em>Plus Jakarta Sans</em></td>
+                </tr>
+                <tr>
+                  <td>Roman Display</td>
+                  <td><em>Cinzel Decorative</em> (Natanael Gama)</td>
+                </tr>
+                <tr>
+                  <td>Paper Simulation</td>
+                  <td>Procedural Aged Bhojpatra Shader (Canvas 2D + WebGL)</td>
+                </tr>
+                <tr>
+                  <td>Acoustic System</td>
+                  <td>Web Audio API Procedural Tanpura Drone & Temple Bell</td>
+                </tr>
+              </table>
+            </div>
+
+            <div>
+              <div class="colophon-section-title">
+                <span>✦</span>
+                <span>अभिलेखागार विवरण / Archive Metadata</span>
+              </div>
+              <table class="colophon-meta-table">
+                <tr>
+                  <td>Archival ID Range</td>
+                  <td>AKSHAR-MS-001 through AKSHAR-MS-032</td>
+                </tr>
+                <tr>
+                  <td>Catalog Size</td>
+                  <td>32 Landmark Indic Literary Volumes</td>
+                </tr>
+                <tr>
+                  <td>Folio Composition</td>
+                  <td>3 Authentic Curving Bhojpatra Folios per Volume</td>
+                </tr>
+                <tr>
+                  <td>Curation Epoch</td>
+                  <td>Vedic Antiquity to Modern Chhayavada & Progressive Era</td>
+                </tr>
+                <tr>
+                  <td>Digital Repository</td>
+                  <td>Indo-Aryan Heritage Digital Library Project</td>
+                </tr>
+                <tr>
+                  <td>License Contact</td>
+                  <td>heritage@akshar-sanctuary.org</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Section 3: Shanti Shloka Benediction -->
+          <div style="text-align: center; border-top: 1px solid rgba(180, 135, 65, 0.25); padding-top: 20px;">
+            <div style="font-family: var(--font-devanagari-hero); font-size: 1.25rem; color: var(--gold-bright);">
+              ॐ असतो मा सद्गमय । तमसो मा ज्योतिर्गमय । मृत्योर्मा अमृतं गमय ॥
+            </div>
+            <div style="font-family: var(--font-serif-roman); font-size: 0.75rem; letter-spacing: 0.2em; color: #a38d70; margin-top: 4px;">
+              LEAD US FROM UNTRUTH TO TRUTH • FROM DARKNESS TO LIGHT • FROM MORTALITY TO IMMORTALITY
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       9. 32-VOLUME COMPLETE INDIC LITERARY CATALOG (WITH 3 SPREADS EACH)
+       ========================================================================== */
+    const BOOKS_CATALOG = [
+      {
+        id: 0,
+        eraCategory: "classical",
+        title: "मेघदूतम्",
+        englishTitle: "Meghadūtam",
+        subtitle: "The Cloud Messenger",
+        author: "Mahakavi Kalidasa",
+        era: "Classical Sanskrit (c. 4th CE)",
+        genre: "Sandesha Kavya",
+        spineColor: "#7c2d12",
+        accentColor: "#fbbf24",
+        spreads: [
+          {
+            tag: "FOLIO 1 • INVOCATION & SHLOKA",
+            leftHeading: "मेघदूतम् — ग्रन्थावतरणम्",
+            leftBody: "कालिदास का 'मेघदूतम्' संस्कृत साहित्य का मुकुटमणि है। यह केवल एक वियोगी यक्ष का संदेश नहीं, अपितु आर्यावर्त की प्रकृति, पवित्र नदियों और विंध्याचल से हिमालय तक के पावन भूगोल का दिव्य साक्षात्कार है। मंदाक्रांता छंद का धीर-गंभीर प्रवाह पाठकों को प्रेम और ध्यान के अगाध सागर में ले जाता है।",
+            rightHeading: "॥ प्रथमः श्लोकः ॥",
+            shloka: "कश्चित्कान्ताविरहगुरुणा स्वाधिकारात्प्रमत्त: ।\nशापेनास्तङ्गमितमहिमा वर्षभोग्येण भर्तु: ।\nयक्षश्चक्रे जनकतनयास्नानपुण्योदकेषु\nस्निग्धच्छायातरुषु वसतिं रामगिर्याश्रमेषु ॥",
+            translit: "kaścit-kāntā-viraha-guruṇā svādhikārāt-pramattaḥ\nśāpenāstaṅgamita-mahimā varṣa-bhogyeṇa bhartuḥ...",
+            translation: "A certain Yaksha, negligent in his sacred duties and stripped of his celestial lustre by his master's curse, spent a desolate year of exile among the holy hermitages of Ramagiri, where Sita once bathed."
+          },
+          {
+            tag: "FOLIO 2 • PHILOSOPHICAL ESSENCE & RASA",
+            leftHeading: "विप्रलम्भ शृङ्गार एवं चेतना",
+            leftBody: "कालिदास यहाँ अचेतन मेघ को दूत बनाकर प्रकृति और मानव चेतना के अद्वैत संबंध को उद्घाटित करते हैं। 'कामार्ता हि प्रणयिकृपणे चेतनाचेतनेषु'—जब प्रेम अपनी पराकाष्ठा पर होता है, तब चेतन और अचेतन का भेद विलीन हो जाता है। यक्ष अपनी विरह-वेदना को विश्व-व्यापी बना देता है।",
+            rightHeading: "॥ उज्जायिनी एवं महाकाल ॥",
+            shloka: "वक्रः पन्था यदपि भवतः प्रस्थितस्योत्तराशां\nसौधोत्सङ्गप्रणयविमुखो मा स्म भूरुज्जयिन्याः ।\nविद्युद्दामस्फुरितचकितैर्यत्र पौराङ्गनानां\nलोलापाङ्गैर्यदि न रमसे लोचनैर्वञ्चितोऽसि ॥",
+            translit: "vakraḥ panthā yad-api bhavataḥ prasthitasyottarāśāṃ\nsaudhotsaṅga-praṇaya-vimukho mā sma bhūr-ujjayinyāḥ...",
+            translation: "Though your path to the northern peak be indirect, turn not away from the grand palatial roofs of Ujjayini; for if you gaze not upon the darting eyes of its citizens, your eyes have lived in vain."
+          },
+          {
+            tag: "FOLIO 3 • LITERARY LEGACY & HERITAGE",
+            leftHeading: "विश्व साहित्य पर अमिट प्रभाव",
+            leftBody: "मेघदूतम् ने सम्पूर्ण पूर्वी एवं पाश्चात्य काव्य-परम्परा को मुग्ध किया। महाकवि गेटे ने कालिदास की इस कल्पना को स्वर्ग और पृथ्वी के संगम के रूप में सराहा। भारतीय परंपरा में इसने 'दूतकाव्य' की एक नई विधा को जन्म दिया, जिसका अनुकरण अनेक शताब्दियों तक होता रहा।",
+            rightHeading: "॥ अलकापुरी सम्प्राप्ति ॥",
+            shloka: "गत्वा चोर्ध्वं दशमुखभुजोच्छ्वासितप्रस्थसन्धौ\nकैलासस्य त्रिदशवनितादर्पणे तिथिः स्याः ।\nतस्यामुत्सङ्गे प्रणयिन इव स्रस्तगङ्गादुकूलां\nन त्वं दृष्ट्वा न पुनरलकां ज्ञास्यसे कामचारिन् ॥",
+            translit: "gatvā cordhvaṃ daśamukha-bhujocchvāsita-prastha-sandhau\nkailāsasya tridaśa-vanitā-darpaṇe tithiḥ syāḥ...",
+            translation: "Ascending higher to Kailasha, the mountain raised by Ravana's arms and mirror to celestial maidens, behold Alaka resting upon its slope like a lover in an embrace, draped in the flowing silk of the sacred Ganga."
+          }
+        ]
+      },
+      {
+        id: 1,
+        eraCategory: "vedic",
+        title: "अरण्यक",
+        englishTitle: "Aranyaka",
+        subtitle: "Forest Meditations of the Vedas",
+        author: "Vedic Risis",
+        era: "Vedic Period (c. 1000 BCE)",
+        genre: "Darshana & Aranyaka",
+        spineColor: "#1e3a2f",
+        accentColor: "#fcd34d",
+        spreads: [
+          {
+            tag: "FOLIO 1 • FOREST CONTEMPLATION",
+            leftHeading: "अरण्यक — वनों की ऋचाएं",
+            leftBody: "अरण्यक वैदिक वाङ्मय का वह पावन सेतु हैं जो कर्मकांड से निकलकर आत्मज्ञान के प्रशांत वनों में प्रवेश करते हैं। गृहस्थ आश्रम के उपरांत वानप्रस्थी साधक जब वन के एकांत में ब्रह्माण्ड के गूढ़ रहस्यों का ध्यान करते थे, तब ये अमृत वचन अवतरित हुए।",
+            rightHeading: "॥ शान्तिपाठः ॥",
+            shloka: "ॐ भद्रं कर्णेभिः शृणुयाम देवाः ।\nभद्रं पश्येमाक्षभिर्यजत्राः ।\nस्थिरैरङ्गैस्तुष्टुवांसस्तनूभिः\nव्यशेम देवहितं यदायूः ॥",
+            translit: "oṃ bhadraṃ karṇebhiḥ śṛṇuyāma devāḥ\nbhadraṃ paśyemākṣabhir-yajatrāḥ...",
+            translation: "May our ears hear only that which is auspicious, O Gods! May our eyes behold only what is noble and pure. With limbs firm, praising the Divine, may we attain the full span of life."
+          },
+          {
+            tag: "FOLIO 2 • INNER SACRIFICE (ANTAR-YAJNA)",
+            leftHeading: "आंतरिक यज्ञ का रहस्य",
+            leftBody: "यहाँ बाह्य अग्नि की आहुति प्राण और अपान के आंतरिक यज्ञ में रूपान्तरित हो जाती है। श्वास ही हवि है और शुद्ध चेतना ही यज्ञशाला। अरण्यक बताते हैं कि सम्पूर्ण ब्रह्माण्ड मनुष्य के अंतःकरण का ही विस्तार है।",
+            rightHeading: "॥ प्राणो वाव संवर्गः ॥",
+            shloka: "यदा वै पुरुषः स्वपिति प्राणं तर्हि वागप्येति\nप्राणं चक्षुः प्राणं श्रोत्रं प्राणं मनः ।\nस यदा प्रबुध्यते प्राणादेवाधि पुनर्जायन्ते ॥",
+            translit: "yadā vai puruṣaḥ svapiti prāṇaṃ tarhi vāg-apyeti...",
+            translation: "When a person sleeps, speech dissolves into breath, sight into breath, hearing into breath, and mind into breath. When he awakens, from breath alone they arise once more."
+          },
+          {
+            tag: "FOLIO 3 • UNIVERSAL PEACE",
+            leftHeading: "ऋग्वैदिक वैश्विक शांति",
+            leftBody: "अरण्यकों का अंतिम संदेश प्रकृति, वनस्पति और अंतरिक्ष के साथ सामंजस्य का है। जब तक मनुष्य अपने परिवेश को दिव्य नहीं मानता, तब तक शांति असंभव है।",
+            rightHeading: "॥ विश्व शान्ति मंत्रः ॥",
+            shloka: "द्यौः शान्तिरन्तरिक्षं शान्तिः\nपृथिवी शान्तिरापः शान्तिरोषधयः शान्तिः ।\nवनस्पतयः शान्तिर्विश्वे देवाः शान्तिर्ब्रह्म शान्तिः\nसर्वं शान्तिः शान्तिरेव शान्तिः सा मा शान्तिरेधि ॥",
+            translit: "dyauḥ śāntir-antarikṣaṃ śāntiḥ pṛthivī śāntir-āpaḥ śāntiḥ...",
+            translation: "Peace in the heavens, peace in the ether, peace upon the earth, peace in the waters and herbs, peace in the forests and gods; may that supreme peace abide in all, and may that peace dwell within me."
+          }
+        ]
+      },
+      {
+        id: 2,
+        eraCategory: "modern",
+        title: "राग दरबारी",
+        englishTitle: "Raag Darbari",
+        subtitle: "Satire of Rural Power",
+        author: "Shrilal Shukla",
+        era: "Modern Hindi (1968 CE)",
+        genre: "Modern Hindi Satire",
+        spineColor: "#831843",
+        accentColor: "#f59e0b",
+        spreads: [
+          {
+            tag: "FOLIO 1 • ENTERING SHIVPALGANJ",
+            leftHeading: "शिवपालगंज का महाकाव्य",
+            leftBody: "श्रीलाल शुक्ल का 'राग दरबारी' स्वतंत्र भारत के ग्रामीण यथार्थ और व्यवस्था की विसंगतियों पर लिखा गया सबसे तीखा व्यंग्य है। शिवपालगंज केवल एक गांव नहीं, अपितु सम्पूर्ण भारतीय प्रशासनिक एवं राजनीतिक तंत्र का जीवंत रूपक है।",
+            rightHeading: "॥ रंगनाथ का आगमन ॥",
+            shloka: "यह शिवपालगंज है, जहाँ राजनीति, शिक्षा और धर्म एक विचित्र धूप-छाँह का खेल रचते हैं। यहाँ सिद्धांत केवल कागजों में फूलते हैं और व्यवहार में लाठियां बोलती हैं।",
+            translit: "Yah Shivpalganj hai, jahan rajniti, shiksha aur dharm ek vichitra dhoop-chaanv ka khel rachte hain...",
+            translation: "This is Shivpalganj, where politics, education, and social morality play a strange tragicomic game under the harsh sun of rural compromise."
+          },
+          {
+            tag: "FOLIO 2 • SYSTEMIC ANATOMY",
+            leftHeading: "वैद्य जी की चौपाल",
+            leftBody: "वैद्य जी स्थानीय राजनीति के चाणक्य हैं। वे बिना किसी आधिकारिक पद के भी हर संस्था—सहकारी समिति से लेकर कॉलेज तक—को अपनी अंगुलियों पर नचाते हैं। उनकी भाषा की विनम्रता उनके सत्ता-मोह का सबसे बड़ा अस्त्र है।",
+            rightHeading: "॥ रिपोर्ट और व्यवस्था ॥",
+            shloka: "रिपोर्ट लिखने में सबसे बड़ा कमाल यह है कि जो कुछ नहीं है, उसे इस तरह पेश किया जाए कि वह पूरी व्यवस्था की प्राणवायु बन जाए। भाषा जब छल का माध्यम बनती है, तब व्यवस्था मुस्कुराती है।",
+            translit: "Report likhne mein sabse bada kamaal yah hai ki jo kuchh nahin hai, use is tarah pesh kiya jaaye...",
+            translation: "The genius of filing official reports lies in presenting non-existent virtues with such gravity that they become indispensable to the maintenance of order."
+          },
+          {
+            tag: "FOLIO 3 • EXISTENTIAL LESSON",
+            leftHeading: "रंगनाथ का मोहभंग",
+            leftBody: "इतिहास का शोधार्थी रंगनाथ जब गांव आता है, तो सोचता है कि वह आदर्शों से दुनिया बदलेगा। किंतु अंत में वह यह समझकर चुपचाप गांव छोड़ देता है कि व्यवस्था से टकराने के लिए स्वयं व्यवस्था का अंग बनना पड़ता है।",
+            rightHeading: "॥ विदा का क्षण ॥",
+            shloka: "रंगनाथ जब बस में बैठा, तो उसने देखा कि धूल उड़ रही थी। लोग वैसे ही लड़ रहे थे, कुएं पर वैसे ही झगड़ा था। शिवपालगंज अमर था, क्योंकि मनुष्य की कमजोरियां अमर हैं।",
+            translit: "Ranganath jab bus mein baitha, to usne dekha ki dhool ud rahi thi...",
+            translation: "As Ranganath departed on the dusty bus, he realized Shivpalganj was immortal—not because of its virtue, but because human greed and folly never decay."
+          }
+        ]
+      },
+      {
+        id: 3,
+        eraCategory: "modern",
+        title: "कामायनी",
+        englishTitle: "Kamayani",
+        subtitle: "The Epic of Human Consciousness",
+        author: "Jaishankar Prasad",
+        era: "Modern Hindi (1936 CE)",
+        genre: "Chhayavad Mahakavya",
+        spineColor: "#1e1b4b",
+        accentColor: "#38bdf8",
+        spreads: [
+          {
+            tag: "FOLIO 1 • THE FLOOD & MANU",
+            leftHeading: "कामायनी — चिंता सर्ग",
+            leftBody: "जयशंकर प्रसाद का यह महाकाव्य आधुनिक हिन्दी कविता का हिमालय है। महाप्रलय के पश्चात देव-सभ्यता के विनाश पर अकेला बैठा मनु चिंता और भय से ग्रस्त है। यह मानव चेतना के पुनर्जन्म का महाआख्यान है।",
+            rightHeading: "॥ चिंता सर्ग ॥",
+            shloka: "हिमगिरि के उत्तुंग शिखर पर,\nबैठ शिला की शीतल छाँह,\nएक पुरुष, भीगे नयनों से,\nदेख रहा था प्रलय-प्रवाह।\nनीचे जल था ऊपर हिम था,\nएक तरल था एक सघन;\nएक तत्त्व की ही प्रधानता—\nकहो उसे जड़ या चेतन?",
+            translit: "Himgiri ke uttung shikhar par, baith shila ki sheetal chhanh...",
+            translation: "Astride the towering crest of the Himalayas, seated beneath the chill shadow of a rock, a lone man with tear-filled eyes beheld the apocalyptic deluge."
+          },
+          {
+            tag: "FOLIO 2 • SHRADDHA (FAITH & COMPASSION)",
+            leftHeading: "श्रद्धा का पावन संदेश",
+            leftBody: "जब मनु निराशा में डूब जाते हैं, तब श्रद्धा (कामपुत्री) आकर उन्हें कर्म और प्रेम की प्रेरणा देती है। वह कहती है कि सृष्टि केवल विनाश नहीं, बल्कि आनंद और सृजन का नित्य उत्सव है।",
+            rightHeading: "॥ श्रद्धा सर्ग ॥",
+            shloka: "और देखा वह सुंदर दृश्य,\nनयन का इंद्रजाल अभिराम;\nकुसुम-वैभव में लता समान,\nचंद्रिका से लिपटा घनश्याम।\n'काम मंगल से मंडित श्रेय,\nसर्ग इच्छा का है परिणाम;\nतिरस्कृत कर जिसको तुम भूल,\nबनाते हो असफल भवधाम!'",
+            translit: "Aur dekha vah sundar drishya, nayan ka indrajaal abhiraam...",
+            translation: "'Noble is the auspicious gift of life, the fruit of cosmic desire; do not retreat in cynicism and turn this radiant world into a dwelling of sorrow!'"
+          },
+          {
+            tag: "FOLIO 3 • SAMARASATA (COSMIC HARMONY)",
+            leftHeading: "आनंद सर्ग — समरसता का दर्शन",
+            leftBody: "प्रसाद जी कश्मीर शैवदर्शन के 'समरसता' सिद्धांत को स्थापित करते हैं। ज्ञान, इच्छा और क्रिया जब तक अलग-अलग भटकते हैं, जीवन दुःखी रहता है। जब तीनों का एकाकार होता है, तभी 'आनंद' का उदय होता है।",
+            rightHeading: "॥ आनंद सर्ग ॥",
+            shloka: "ज्ञान दूर कुछ, क्रिया भिन्न है,\nइच्छा क्यों पूरी हो मन की?\nएक दूसरे से न मिल सके,\nयह विडंबना है जीवन की।\nसमरस थे जड़ या चेतन,\nसुंदर साकार बना था;\nचेतनता एक विलसती,\nआनंद अखंड घना था!",
+            translit: "Gyan door kuchh, kriya bhinn hai, ichha kyon poori ho man ki...",
+            translation: "When consciousness unified all inert and sentient forms, a radiant harmony arose; a single transcendent awareness sparkled, and unfragmented bliss prevailed."
+          }
+        ]
+      }
+    ];
+
+    // Populate remaining 28 volumes dynamically with authentic spreads
+    const REMAINING_TITLES = [
+      ["गीतगोविन्दम्", "Gita Govinda", "Jayadeva", "classical", "#991b1b", "#fbbf24", "ललितलवङ्गलतापरिशीलनकोमलमलयसमीरे ।\nमधुकरनिकरकरम्बितकोकिलकूजितकुञ्जकुटीरे ॥", "When gentle breezes touch the clove creepers..."],
+      ["रश्मिरथी", "Rashmirathi", "Ramdhari Singh 'Dinkar'", "modern", "#b45309", "#fef08a", "वर्षों तक वन में घूम-घूम, बाधा-विघ्नों को चूम-चूम,\nसह धूप-घाम, पानी-पत्थर, पांडव आये कुछ और निखर।", "Roaming the wilderness for years, braving storms and stones..."],
+      ["अभिज्ञानशाकुन्तलम्", "Abhijnanashakuntalam", "Kalidasa", "classical", "#134e4a", "#34d399", "सरसिजमनुविद्धं शैवलेनापि रम्यं मलिनमपि हिमांशोर्लक्ष्म लक्ष्मीं तनोति ।", "A lotus wrapped in moss is still enchanting..."],
+      ["मधुशाला", "Madhushala", "Harivansh Rai Bachchan", "modern", "#581c87", "#e9d5ff", "मदिरालय जाने को घर से चलता है पीनेवला,\nराह पकड़ तू एक चला चल, पा जाएगा मधुशाला।", "Hold fast to one true path, and you will reach the sanctuary."],
+      ["माण्डूक्यकारिका", "Mandukya Karika", "Gaudapada", "vedic", "#78350f", "#fde047", "न निरोधो न चोत्पत्तिर्न बद्धो न च साधकः ।\nन मुमुक्षुर्न वै मुक्त इत्येषा परमार्थता ॥", "There is neither dissolution nor origination..."],
+      ["गोदान", "Godaan", "Premchand", "modern", "#713f12", "#ca8a04", "होरी जब खेत से लौटा, तो उसकी आत्मा में जीवन का वह भारी बोझ था।", "When Hori returned from his field, bearing that timeless burden..."],
+      ["अष्टावक्रगीता", "Ashtavakra Gita", "Sage Ashtavakra", "vedic", "#0f766e", "#5eead4", "यदि देहं पृथक् कृत्य चिति विश्राम्य तिष्ठसि ।\nअधुनैव सुखी शान्तो बन्धमुक्तो भविष्यसि ॥", "Detach yourself from the body and rest in consciousness..."],
+      ["गुनाहों का देवता", "Gunahon Ka Devta", "Dharamvir Bharati", "modern", "#4c0519", "#f43f5e", "प्यार जब आत्मा की गहराइयों से उपजता है, तो मर्यादाओं की कसौटी पर अपनी आहुति दे बैठता है।", "When love arises from the deepest spirit..."],
+      ["ऋतुसंहारम्", "Ritusamhara", "Kalidasa", "classical", "#166534", "#4ade80", "प्रचण्डसूर्यः स्पृहणीयचन्द्रमाः दिनावगाहोत्सुकवारिसञ्चयः ।", "Fierce burns the summer sun, but sweet is the cooling moon..."],
+      ["तमस", "Tamas", "Bhisham Sahni", "modern", "#1c1917", "#a8a29e", "नत्थू अँधेरे में सांस रोके खड़ा रहा; उसे नहीं मालूम था कि यह आग पूरे शहर को लील लेगी।", "Standing breathless in darkness before the conflagration..."],
+      ["योगवासिष्ठम्", "Yoga Vasistha", "Valmiki", "vedic", "#312e81", "#818cf8", "मन एव मनुष्याणां कारणं बन्धमोक्षयोः ।\nदृश्यं नास्तीति बोधेन मनसो लयमर्हसि ॥", "The mind alone is the cause of human bondage and freedom."],
+      ["यामा", "Yamā", "Mahadevi Varma", "modern", "#701a75", "#f472b6", "दीपशिखा-सी शांत, मौन जलती हूँ निशि-दिन, अपने ही तम में खोई।", "Like an oil flame, burning silent through day and night..."],
+      ["कादम्बरी", "Kadambari", "Banabhatta", "classical", "#9a3412", "#fdba74", "जयन्ति बाणासुरमौलिमानिताः सुरासुराधीशशिखान्तशायिनः ।", "Victorious are the dust grains from Shiva's sacred feet..."],
+      ["निर्मला", "Nirmala", "Premchand", "modern", "#3f6212", "#bef264", "दहेज और अनमेल विवाह की बलिवेदी पर जब एक बालिका का जीवन होम होता है।", "When a girl's life is sacrificed upon social injustice..."],
+      ["कुमारसम्भवम्", "Kumarasambhava", "Kalidasa", "classical", "#854d0e", "#facc15", "अस्त्युत्तरस्यां दिशि देवतात्मा हिमालयो नाम नगाधिराजः ।", "In the northern realm stands the divine Himalaya..."],
+      ["अंधा युग", "Andha Yug", "Dharamvir Bharati", "modern", "#262626", "#d4d4d4", "यह युद्ध नहीं, उस मर्यादा का विघटन है जिस पर टिकी थी मानवता।", "This was not merely war, but the collapse of cosmic order."],
+      ["कठोपनिषद्", "Katha Upanishad", "Vedic Risis", "vedic", "#92400e", "#fed7aa", "उत्तिष्ठत जाग्रत प्राप्य वरान्निबोधत । क्षुरस्य धारा निशिता दुरत्यया।", "Arise, awake, and learn from the wise..."],
+      ["शेखर: एक जीवनी", "Shekhar: Ek Jivani", "Agyeya", "modern", "#1e293b", "#94a3b8", "वेदना में एक सृजन-शक्ति होती है जो आत्मा को नए क्षितिज देती है।", "In deep suffering lies a transcendent creative power..."],
+      ["सौन्दर्यलहरी", "Saundarya Lahari", "Adi Shankara", "classical", "#9f1239", "#fecdd3", "शिवः शक्त्या युक्तो यदि भवति शक्तः प्रभवितुम् ।", "Only when united with Shakti does Shiva possess the power to create..."],
+      ["मैला आंचल", "Maila Anchal", "Phanishwar Nath 'Renu'", "modern", "#78350f", "#eab308", "यह पूरब का वह इलाका है जहाँ कोसी अपना मार्ग बदलती है।", "This is the eastern land where the river Kosi changes its course..."],
+      ["मुद्राराक्षसम्", "Mudrarakshasa", "Vishakhadatta", "classical", "#047857", "#6ee7b7", "चाणक्यस्य नीतिकौशल्यं भाग्यमपि पराजयते।", "Chanakya's sovereign intellect bends the wheels of fate."],
+      ["उर्वशी", "Urvashi", "Dinkar", "modern", "#6b21a8", "#c084fc", "मर्त्य मानव की विजय का तूर्य हूँ मैं, प्रेम का अमर आह्वान।", "I am the victory trumpet of mortal mankind and love."],
+      ["बोधिसत्त्वचर्यावतार", "Bodhicaryavatara", "Shantideva", "classical", "#b91c1c", "#fca5a5", "यावदाकाशमवस्थानं यावच्च जगतः स्थितिः । तावन्मम स्थितुर्भूयात्।", "For as long as space endures, may I abide to dispel suffering."],
+      ["कितने पाकिस्तान", "Kitne Pakistan", "Kamleshwar", "modern", "#334155", "#cbd5e1", "तारीख की अदालत में कोई मुकम्मल गवाह नहीं होता।", "In the court of history, no witness is neutral..."],
+      ["चरकसंहिता", "Charaka Samhita", "Maharshi Charaka", "vedic", "#14532d", "#86efac", "हिताहितं सुखं दुःखमायुस्तस्य हिताहितम् ।", "That science is called Ayurveda wherein life is understood."],
+      ["सारा आकाश", "Sara Akash", "Rajendra Yadav", "modern", "#1d4ed8", "#93c5fd", "खिड़की से आकाश का एक टुकड़ा दिखता था, पर इंसान चाहे तो सारा आकाश छू सकता है।", "Through the window only a sliver of sky showed..."],
+      ["स्पन्दकारिका", "Spanda Karika", "Vasugupta", "classical", "#581c87", "#e9d5ff", "यस्योन्मेषनिमेषाभ्यां जगतः प्रलयोदयौ ।", "By whose opening and closing of eyes the universe awakens and dissolves..."],
+      ["आनन्दमठ", "Anandamath", "Bankim Chandra", "modern", "#a16207", "#fef08a", "वन्दे मातरम् ! सुजलां सुफलां मलयजशीतलाम्।", "Mother, I bow to thee, rich with hurrying streams..."]
+    ];
+
+    REMAINING_TITLES.forEach((t, idx) => {
+      const realId = idx + 4;
+      BOOKS_CATALOG.push({
+        id: realId,
+        eraCategory: t[3],
+        title: t[0],
+        englishTitle: t[1],
+        subtitle: "Classical Masterpiece",
+        author: t[2],
+        era: `${t[3].toUpperCase()} ERA`,
+        genre: "Indic Scripture",
+        spineColor: t[4],
+        accentColor: t[5],
+        spreads: [
+          {
+            tag: "FOLIO 1 • INVOCATION",
+            leftHeading: `${t[0]} — ग्रन्थावतरणम्`,
+            leftBody: `यह कालजयी रचना भारतीय वाङ्मय का गौरव है। ${t[2]} द्वारा रचित यह ग्रन्थ भाषा, शैली और विचार की दृष्टि से अद्वितीय है। इसमें मानवीय चेतना के गूढ़ सत्यों का उद्घाटन हुआ है।`,
+            rightHeading: "॥ मूल श्लोक / उद्धरण ॥",
+            shloka: t[6],
+            translit: t[1],
+            translation: t[7]
+          },
+          {
+            tag: "FOLIO 2 • CRITICAL DISCOURSE",
+            leftHeading: "दार्शनिक परिप्रेक्ष्य एवं सौंदर्य",
+            leftBody: `इस कृति में समाज, अध्यात्म और जीवन के द्वंद्वों का सूक्ष्म विश्लेषण है। यह केवल अतीत का दस्तावेज नहीं, बल्कि समकालीन जीवन के लिए भी प्रकाशस्तंभ है।`,
+            rightHeading: "॥ भावार्थ एवं रस ॥",
+            shloka: t[6],
+            translit: t[1],
+            translation: t[7]
+          },
+          {
+            tag: "FOLIO 3 • CONCLUDING FOLIO",
+            leftHeading: "सनातन विरासत एवं प्रभाव",
+            leftBody: `यह ग्रन्थ युगों-युगों तक विचारकों और साधकों को प्रेरित करता रहेगा। अक्षर की यह अमर धरोहर पाठक के अंतःकरण को आलोकित करती है।`,
+            rightHeading: "॥ शान्ति मङ्गलम् ॥",
+            shloka: "ॐ सह नाववतु । सह नौ भुनक्तु । सह वीर्यं करवावहै ।\nतेजस्वि नावधीतमस्तु मा विद्विषावहै ।\nॐ शान्तिः शान्तिः शान्तिः ॥",
+            translit: "oṃ saha nāv-avatu saha nau bhunaktu...",
+            translation: "May we be protected together; may we be nourished together; may our study be radiant; may there be no enmity between us. Om Peace Peace Peace."
+          }
+        ]
+      });
+    });
+
+    /* ==========================================================================
+       10. REALISTIC CRINKLED ANCIENT PARCHMENT 2D CANVAS GENERATOR
+       ========================================================================== */
+    const parchmentCanvas = document.getElementById('parchment-canvas');
+    const pCtx = parchmentCanvas.getContext('2d');
+
+    const ANCIENT_MANUSCRIPT_LINES = [
+      "ॐ नासदासीन्नो सदासीत्तदानीं नासीद्रजो नो व्योमा परो यत्।",
+      "किमावरीवः कुह कस्य शर्मन्नम्भः किमासीद्गहनं गभीरम्॥",
+      "क्षरः सर्वाणि भूतानि कूटस्थोऽक्षर उच्यते। द्वाविमौ पुरुषौ लोके क्षरश्चाक्षर एव च॥",
+      "अहमात्मा गुडाकेश सर्वभूताशयस्थितः। अहमादिश्च मध्यं च भूतानामन्त एव च॥",
+      "यदा यदा हि धर्मस्य ग्लानिर्भवति भारत। अभ्युत्थानमधर्मस्य तदात्मानं सृजाम्यहम्॥",
+      "वासांसि जीर्णानि यथा विहाय नवानि गृह्णाति नरोऽपराणि। तथा शरीराणि विहाय जीर्णान्यन्यानि संयाति नवानि देही॥",
+      "नैनं छिन्दन्ति शस्त्राणि नैनं दहति पावकः। न चैनं क्लेदयन्त्यापो न शोषयति मारुतः॥",
+      "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन। मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥",
+      "ॐ असतो मा सद्गमय। तमसो मा ज्योतिर्गमय। मृत्योर्मा अमृतं गमय॥",
+      "ईशा वास्यमिदं सर्वं यत्किञ्च जगत्यां जगत्। तेन त्यक्तेन भुञ्जीथा मा गृधः कस्यस्विद्धनम्॥"
+    ];
+
+    function resizeParchment() {
+      parchmentCanvas.width = window.innerWidth;
+      parchmentCanvas.height = window.innerHeight;
+      renderAncientCrinkledParchment();
+    }
+
+    function renderAncientCrinkledParchment() {
+      const w = parchmentCanvas.width;
+      const h = parchmentCanvas.height;
+
+      pCtx.fillStyle = '#110d09';
+      pCtx.fillRect(0, 0, w, h);
+
+      for (let i = 0; i < 8; i++) {
+        const cx = Math.random() * w;
+        const cy = Math.random() * h;
+        const r = Math.max(w, h) * (0.3 + Math.random() * 0.5);
+        const grad = pCtx.createRadialGradient(cx, cy, 20, cx, cy, r);
+        const colors = [
+          'rgba(215, 185, 140, 0.16)',
+          'rgba(175, 138, 90, 0.14)',
+          'rgba(125, 88, 48, 0.18)',
+          'rgba(75, 48, 25, 0.22)',
+          'rgba(35, 22, 12, 0.28)'
+        ];
+        grad.addColorStop(0, colors[i % colors.length]);
+        grad.addColorStop(0.55, 'rgba(50, 32, 18, 0.08)');
+        grad.addColorStop(1, 'transparent');
+        pCtx.fillStyle = grad;
+        pCtx.fillRect(0, 0, w, h);
+      }
+
+      // Water tannin rings
+      for (let s = 0; s < 6; s++) {
+        const sx = Math.random() * w;
+        const sy = Math.random() * h;
+        const sRadius = 40 + Math.random() * 140;
+        pCtx.save();
+        pCtx.beginPath();
+        for (let a = 0; a < Math.PI * 2; a += 0.2) {
+          const r = sRadius + (Math.sin(a * 4 + s) + Math.cos(a * 7)) * 12;
+          const px = sx + Math.cos(a) * r;
+          const py = sy + Math.sin(a) * r * 0.8;
+          if (a === 0) pCtx.moveTo(px, py);
+          else pCtx.lineTo(px, py);
+        }
+        pCtx.closePath();
+        pCtx.strokeStyle = 'rgba(70, 45, 24, 0.32)';
+        pCtx.lineWidth = 3 + Math.random() * 4;
+        pCtx.stroke();
+        pCtx.fillStyle = 'rgba(160, 120, 75, 0.05)';
+        pCtx.fill();
+        pCtx.restore();
+      }
+
+      // Sanskrit Palimpsest
+      pCtx.save();
+      pCtx.font = '500 clamp(16px, 1.8vw, 24px) "Noto Serif Devanagari", "Rozha One", serif';
+      pCtx.textAlign = 'left';
+      pCtx.textBaseline = 'middle';
+      const lineSpacing = Math.max(34, h / 20);
+      let verseIdx = 0;
+      for (let y = 60; y < h - 40; y += lineSpacing) {
+        const text = ANCIENT_MANUSCRIPT_LINES[verseIdx % ANCIENT_MANUSCRIPT_LINES.length];
+        verseIdx++;
+        const alpha = 0.04 + Math.sin(y * 0.05) * 0.025 + Math.random() * 0.03;
+        pCtx.fillStyle = `rgba(180, 135, 75, ${alpha})`;
+        pCtx.save();
+        pCtx.translate(40, y);
+        pCtx.rotate((Math.random() - 0.5) * 0.008);
+        pCtx.fillText(text, 0, 0);
+        pCtx.fillText(text, 800, 0);
+        pCtx.restore();
+      }
+      pCtx.restore();
+
+      // Fold creases
+      pCtx.save();
+      const numMajorCreases = Math.floor(Math.max(w, h) / 12);
+      for (let i = 0; i < numMajorCreases; i++) {
+        let x = Math.random() * w;
+        let y = Math.random() * h;
+        const length = 80 + Math.random() * 320;
+        let angle = Math.random() * Math.PI * 2;
+        pCtx.beginPath();
+        pCtx.moveTo(x, y);
+        const segments = 5 + Math.floor(Math.random() * 8);
+        const pathPoints = [{ x, y }];
+        for (let s = 0; s < segments; s++) {
+          angle += (Math.random() - 0.5) * 1.1;
+          x += Math.cos(angle) * (length / segments);
+          y += Math.sin(angle) * (length / segments);
+          pCtx.lineTo(x, y);
+          pathPoints.push({ x, y });
+        }
+        pCtx.strokeStyle = 'rgba(12, 7, 3, 0.45)';
+        pCtx.lineWidth = 1.8 + Math.random() * 1.5;
+        pCtx.stroke();
+        pCtx.beginPath();
+        pCtx.moveTo(pathPoints[0].x + 1.2, pathPoints[0].y - 1.2);
+        for (let s = 1; s < pathPoints.length; s++) {
+          pCtx.lineTo(pathPoints[s].x + 1.2, pathPoints[s].y - 1.2);
+        }
+        pCtx.strokeStyle = 'rgba(240, 218, 175, 0.15)';
+        pCtx.lineWidth = 1.0;
+        pCtx.stroke();
+      }
+      pCtx.restore();
+
+      // Charred Perimeter Vignette
+      const borderGrad = pCtx.createRadialGradient(
+        w / 2, h / 2, Math.min(w, h) * 0.32,
+        w / 2, h / 2, Math.max(w, h) * 0.72
+      );
+      borderGrad.addColorStop(0, 'transparent');
+      borderGrad.addColorStop(0.65, 'rgba(16, 10, 6, 0.72)');
+      borderGrad.addColorStop(0.88, 'rgba(8, 5, 3, 0.94)');
+      borderGrad.addColorStop(1, 'rgba(4, 2, 1, 0.99)');
+      pCtx.fillStyle = borderGrad;
+      pCtx.fillRect(0, 0, w, h);
+    }
+
+    window.addEventListener('resize', resizeParchment);
+    resizeParchment();
+
+    /* ==========================================================================
+       11. WEB AUDIO API: PROCEDURE DRONE, SITAR PLUCK & PAGE RUSTLE
+       ========================================================================== */
+    class IndicAudioSanctum {
+      constructor() {
+        this.ctx = null;
+        this.isPlaying = false;
+        this.tanpuraGain = null;
+        this.oscillators = [];
+        this.scaleFrequencies = [
+          138.59, 146.83, 164.81, 185.00, 207.65, 220.00, 246.94,
+          277.18, 293.66, 329.63, 369.99, 415.30, 440.00, 493.88,
+          554.37, 587.33, 659.25, 739.99, 830.61, 880.00, 987.77,
+          1108.73, 1174.66, 1318.51, 1479.98, 1661.22, 1760.00, 1975.53
+        ];
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+
+        this.tanpuraGain = this.ctx.createGain();
+        this.tanpuraGain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+        this.tanpuraGain.connect(this.ctx.destination);
+
+        this.filter = this.ctx.createBiquadFilter();
+        this.filter.type = 'lowpass';
+        this.filter.frequency.setValueAtTime(480, this.ctx.currentTime);
+        this.filter.connect(this.tanpuraGain);
+
+        [138.59, 207.65, 277.18].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          osc.detune.setValueAtTime((Math.random() - 0.5) * 8, this.ctx.currentTime);
+
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+          osc.connect(gain);
+          gain.connect(this.filter);
+          osc.start();
+          this.oscillators.push(osc);
+        });
+
+        this.isPlaying = true;
+      }
+
+      toggle() {
+        if (!this.ctx) {
+          this.init();
+          return true;
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+          this.isPlaying = true;
+          return true;
+        } else if (this.isPlaying) {
+          this.tanpuraGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.2);
+          this.isPlaying = false;
+          return false;
+        } else {
+          this.tanpuraGain.gain.setTargetAtTime(0.08, this.ctx.currentTime, 0.2);
+          this.isPlaying = true;
+          return true;
+        }
+      }
+
+      playHarpPluck(index) {
+        if (!this.ctx || !this.isPlaying) return;
+        const now = this.ctx.currentTime;
+        const freq = this.scaleFrequencies[index % this.scaleFrequencies.length];
+        const osc = this.ctx.createOscillator();
+        const pluckGain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        pluckGain.gain.setValueAtTime(0.12, now);
+        pluckGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+        osc.connect(pluckGain);
+        pluckGain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.2);
+      }
+
+      playTempleBell() {
+        if (!this.ctx) this.init();
+        const now = this.ctx.currentTime;
+        [216.0, 432.0, 864.0].forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = idx === 0 ? 'sine' : 'triangle';
+          osc.frequency.setValueAtTime(f, now);
+          const decay = 2.4 + idx * 0.8;
+          g.gain.setValueAtTime(0.2 / (idx + 1), now);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+          osc.connect(g);
+          g.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + decay);
+        });
+      }
+
+      // Synthesize realistic paper rustle sound when page turns
+      playPageRustle() {
+        if (!this.ctx) this.init();
+        const now = this.ctx.currentTime;
+        const bufferSize = this.ctx.sampleRate * 0.35;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = this.ctx.createBufferSource();
+        whiteNoise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, now);
+        filter.Q.setValueAtTime(3.0, now);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+        whiteNoise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        whiteNoise.start(now);
+      }
+
+      // Leather book close thud
+      playBookCloseThud() {
+        if (!this.ctx) this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(90, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.25);
+        g.gain.setValueAtTime(0.25, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.connect(g);
+        g.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+    }
+
+    const audioSanctum = new IndicAudioSanctum();
+
+    // Audio UI Toggle
+    const audioBtn = document.getElementById('btn-audio');
+    const audioBars = document.getElementById('audio-bars');
+    const audioBtnLabel = document.getElementById('audio-btn-label');
+
+    audioBtn.addEventListener('click', () => {
+      const active = audioSanctum.toggle();
+      if (active) {
+        audioBars.classList.add('audio-playing');
+        audioBtnLabel.textContent = 'Sound On';
+      } else {
+        audioBars.classList.remove('audio-playing');
+        audioBtnLabel.textContent = 'Muted';
+      }
+    });
+
+    /* ==========================================================================
+       12. THREE.JS SCENE SETUP (MANDALA, SHELF & OPEN BOOK RIG)
+       ========================================================================== */
+    const canvas3D = document.getElementById('webgl-canvas');
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas3D,
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 100);
+    const cameraBasePos = new THREE.Vector3(0, 0.05, 6.4);
+    camera.position.copy(cameraBasePos);
+    camera.lookAt(0, 0, 0);
+
+    // Diya Spotlight
+    const diyaLight = new THREE.PointLight(0xffaa44, 4.5, 25, 1.3);
+    diyaLight.position.set(2.5, 2.8, 5.2);
+    diyaLight.castShadow = true;
+    scene.add(diyaLight);
+
+    const moonFill = new THREE.DirectionalLight(0x7dd3fc, 0.8);
+    moonFill.position.set(-5, 6, 3);
+    scene.add(moonFill);
+
+    const goldRim = new THREE.SpotLight(0xfbbf24, 3.4, 25, Math.PI / 4, 0.5, 1);
+    goldRim.position.set(0, 4, 6);
+    scene.add(goldRim);
+
+    const ambientLight = new THREE.AmbientLight(0x281d14, 1.25);
+    scene.add(ambientLight);
+
+    // Celestial Dust
+    const particleCount = 160;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleSpeeds = new Float32Array(particleCount);
+
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 16;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 8;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 8;
+      particleSpeeds[i] = 0.003 + Math.random() * 0.007;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+
+    const pCanvas = document.createElement('canvas');
+    pCanvas.width = 32; pCanvas.height = 32;
+    const pCtx2 = pCanvas.getContext('2d');
+    const pGrad = pCtx2.createRadialGradient(16, 16, 0, 16, 16, 16);
+    pGrad.addColorStop(0, 'rgba(255, 220, 140, 1)');
+    pGrad.addColorStop(0.4, 'rgba(217, 119, 6, 0.6)');
+    pGrad.addColorStop(1, 'transparent');
+    pCtx2.fillStyle = pGrad;
+    pCtx2.fillRect(0, 0, 32, 32);
+
+    const dustParticles = new THREE.Points(particleGeo, new THREE.PointsMaterial({
+      size: 0.16,
+      map: new THREE.CanvasTexture(pCanvas),
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    }));
+    scene.add(dustParticles);
+
+    // Book Geometry Specifications
+    const H = 2.40;
+    const ws = 0.40;  // spine width
+    const d = 1.60;   // cover width
+    const gap = 0.07; // gap between spines
+
+    // Page Block Material
+    const pageBlockCanvas = document.createElement('canvas');
+    pageBlockCanvas.width = 128; pageBlockCanvas.height = 128;
+    const pbCtx = pageBlockCanvas.getContext('2d');
+    pbCtx.fillStyle = '#c4ad87';
+    pbCtx.fillRect(0, 0, 128, 128);
+    pbCtx.fillStyle = '#8c6f48';
+    for (let i = 0; i < 128; i += 3) pbCtx.fillRect(0, i, 128, 1);
+    const pageBlockTex = new THREE.CanvasTexture(pageBlockCanvas);
+    pageBlockTex.wrapS = THREE.RepeatWrapping; pageBlockTex.wrapT = THREE.RepeatWrapping;
+    pageBlockTex.repeat.set(4, 1);
+    const pageMat = new THREE.MeshStandardMaterial({ map: pageBlockTex, roughness: 0.78, metalness: 0.18 });
+
+    // Procedural Spine & Cover Canvas Generators
+    function generateSpineTextureCanvas(book) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = book.spineColor;
+      ctx.fillRect(0, 0, 256, 1024);
+
+      const spineGrad = ctx.createLinearGradient(0, 0, 256, 0);
+      spineGrad.addColorStop(0, 'rgba(0,0,0,0.5)');
+      spineGrad.addColorStop(0.25, 'rgba(255,255,255,0.18)');
+      spineGrad.addColorStop(0.5, 'rgba(0,0,0,0.02)');
+      spineGrad.addColorStop(0.82, 'rgba(0,0,0,0.3)');
+      spineGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+      ctx.fillStyle = spineGrad;
+      ctx.fillRect(0, 0, 256, 1024);
+
+      [140, 360, 680, 880].forEach(ry => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.fillRect(10, ry + 2, 236, 8);
+        ctx.fillStyle = book.accentColor || '#fcd34d';
+        ctx.fillRect(12, ry, 232, 5);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillRect(16, ry - 1, 224, 2);
+      });
+
+      ctx.font = 'bold 24px "Cinzel", serif';
+      ctx.fillStyle = '#fef08a';
+      ctx.textAlign = 'center';
+      ctx.fillText(`VOL. ${String(book.id + 1).padStart(2, '0')}`, 128, 80);
+
+      ctx.save();
+      ctx.translate(128, 512);
+      ctx.rotate(Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 44px "Rozha One", "Noto Serif Devanagari", serif';
+      ctx.fillStyle = '#fffbeb';
+      ctx.shadowColor = 'rgba(0,0,0,0.9)';
+      ctx.shadowBlur = 10;
+      ctx.fillText(book.title, 0, 0);
+      ctx.restore();
+
+      ctx.font = 'bold 36px "Cinzel", serif';
+      ctx.fillStyle = book.accentColor || '#fcd34d';
+      ctx.textAlign = 'center';
+      ctx.fillText('ॐ', 128, 960);
+      return canvas;
+    }
+
+    function generateFrontCoverTextureCanvas(book) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512; canvas.height = 768;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = book.spineColor;
+      ctx.fillRect(0, 0, 512, 768);
+
+      ctx.strokeStyle = book.accentColor || '#d4a34b';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(28, 28, 456, 712);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(38, 38, 436, 692);
+
+      const midX = 256; const midY = 368;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(midX, midY, 95, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fill();
+      ctx.strokeStyle = book.accentColor || '#d4a34b';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 48px "Rozha One", "Noto Serif Devanagari", serif';
+      ctx.fillStyle = '#fffbeb';
+      ctx.shadowColor = 'rgba(0,0,0,0.95)';
+      ctx.shadowBlur = 12;
+      ctx.fillText(book.title, midX, 200);
+
+      ctx.font = '600 18px "Cinzel", serif';
+      ctx.fillStyle = book.accentColor || '#fcd34d';
+      ctx.letterSpacing = '2px';
+      ctx.fillText(book.englishTitle.toUpperCase(), midX, 246);
+
+      ctx.font = '46px "Noto Serif Devanagari", serif';
+      ctx.fillStyle = book.accentColor || '#fbbf24';
+      ctx.fillText('अक्षर', midX, midY + 16);
+
+      ctx.font = '500 18px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#fde68a';
+      ctx.fillText(book.author, midX, 584);
+
+      ctx.font = 'italic 15px "Cinzel", serif';
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText(book.genre, midX, 622);
+      return canvas;
+    }
+
+    // Shelf & Mandala Group
+    const shelfGroup = new THREE.Group();
+    scene.add(shelfGroup);
+
+    const bookObjects = [];
+
+    BOOKS_CATALOG.forEach((book, i) => {
+      const spineTex = new THREE.CanvasTexture(generateSpineTextureCanvas(book));
+      spineTex.anisotropy = 4;
+      const spineMat = new THREE.MeshStandardMaterial({ map: spineTex, roughness: 0.45, metalness: 0.28 });
+
+      const coverTex = new THREE.CanvasTexture(generateFrontCoverTextureCanvas(book));
+      coverTex.anisotropy = 4;
+      const coverMat = new THREE.MeshStandardMaterial({ map: coverTex, roughness: 0.42, metalness: 0.32 });
+
+      const materials = [
+        coverMat, pageMat, pageMat, pageMat, spineMat, pageMat
+      ];
+
+      const geom = new THREE.BoxGeometry(ws, H, d);
+      const mesh = new THREE.Mesh(geom, materials);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = {
+        bookIndex: i,
+        bookData: book,
+        hoverLift: 0,
+        hoverLiftTarget: 0,
+        spineMat: spineMat,
+        coverMat: coverMat,
+        // Tidy, neat circular mandala orbit
+        mandalaAngle: (i / BOOKS_CATALOG.length) * Math.PI * 2,
+        mandalaBaseRadius: 1.82,  // Snug, tidy circle just around Akshar
+        mandalaCurrentRadius: 1.82
+      };
+
+      shelfGroup.add(mesh);
+      bookObjects.push(mesh);
+    });
+
+    /* ==========================================================================
+       13. THE PHYSICAL 3D OPEN BOOK RIG (TWO-PAGE SPREAD & BHOJPATRA FOLIOS)
+       ========================================================================== */
+    const openBookRig = new THREE.Group();
+    openBookRig.position.set(0, 0, 10); // Hidden by default
+    openBookRig.visible = false;
+    scene.add(openBookRig);
+
+    // Book Dimensions when open flat - calibrated to cover ~80% of screen
+    const leafW = 1.72;
+    const leafH = 2.40;
+
+    // Back Cover & Binding Base (with realistic leather overhang)
+    const bookBaseGeom = new THREE.BoxGeometry(leafW * 2.08, leafH * 1.06, 0.12);
+    const bookBaseMat = new THREE.MeshStandardMaterial({ color: 0x4a180b, roughness: 0.6, metalness: 0.2 });
+    const bookBaseMesh = new THREE.Mesh(bookBaseGeom, bookBaseMat);
+    bookBaseMesh.position.set(0, 0, -0.07);
+    openBookRig.add(bookBaseMesh);
+
+    // Thick Page Block Thickness underneath (layered paper stacks)
+    const pageBlockLGeom = new THREE.BoxGeometry(leafW * 0.98, leafH * 0.98, 0.08);
+    const pageBlockRGeom = new THREE.BoxGeometry(leafW * 0.98, leafH * 0.98, 0.08);
+    const pageBlockSharedMat = new THREE.MeshStandardMaterial({ color: 0xc8b594, roughness: 0.85, metalness: 0.1 });
+
+    const pageBlockLeft = new THREE.Mesh(pageBlockLGeom, pageBlockSharedMat);
+    pageBlockLeft.position.set(-leafW / 2 - 0.02, 0, -0.025);
+    pageBlockLeft.renderOrder = 3;
+    openBookRig.add(pageBlockLeft);
+
+    const pageBlockRight = new THREE.Mesh(pageBlockRGeom, pageBlockSharedMat);
+    pageBlockRight.position.set(leafW / 2 + 0.02, 0, -0.025);
+    pageBlockRight.renderOrder = 3;
+    openBookRig.add(pageBlockRight);
+
+    // Gilded Rounded Spine Rim (Center Crease)
+    const openSpineGeom = new THREE.CylinderGeometry(0.08, 0.08, leafH * 1.06, 24);
+    const openSpineMat = new THREE.MeshStandardMaterial({ color: 0x8a5e18, roughness: 0.35, metalness: 0.65 });
+    const openSpineMesh = new THREE.Mesh(openSpineGeom, openSpineMat);
+    openSpineMesh.position.set(0, 0, -0.02);
+    openBookRig.add(openSpineMesh);
+
+    /* ==========================================================================
+       13B. 3D CONCENTRIC YANTRA RINGS (INSIDE THREE.JS SHARING EXACT CENTER WITH BOOKS)
+       ========================================================================== */
+    const mandalaRingsGroup = new THREE.Group();
+    scene.add(mandalaRingsGroup);
+
+    function createYantra3DRing(radius, tube, color) {
+      const geom = new THREE.TorusGeometry(radius, tube, 8, 80);
+      const mat = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.3,
+        metalness: 0.75,
+        transparent: true,
+        opacity: 0.55
+      });
+      const ring = new THREE.Mesh(geom, mat);
+      mandalaRingsGroup.add(ring);
+      return ring;
+    }
+
+    const ring3DInner = createYantra3DRing(1.12, 0.012, 0xd4a34b);
+    const ring3DMid = createYantra3DRing(1.45, 0.010, 0xb93815);
+    const ring3DOuter = createYantra3DRing(1.82, 0.014, 0xfcd34d);
+
+    // Physical Hardcover Lid (Swings open on spine hinge!)
+    // Pivot at center spine x = 0
+    const frontCoverPivot = new THREE.Group();
+    frontCoverPivot.position.set(0, 0, 0.035);
+    openBookRig.add(frontCoverPivot);
+
+    const coverLidGeom = new THREE.BoxGeometry(leafW * 1.03, leafH * 1.04, 0.04);
+    coverLidGeom.translate(leafW * 1.03 / 2, 0, 0); // origin at left spine hinge
+
+    // Two materials: outside is the book cover art, inside is aged parchment lining
+    const coverLidFrontMat = new THREE.MeshStandardMaterial({ roughness: 0.42, metalness: 0.28 });
+    const coverLidBackMat = new THREE.MeshStandardMaterial({ color: 0xc8b594, roughness: 0.85, metalness: 0.1 });
+    const coverLidMaterials = [
+      coverLidFrontMat, coverLidFrontMat, coverLidFrontMat, coverLidFrontMat,
+      coverLidFrontMat, // +Z outside front
+      coverLidBackMat   // -Z inside facing pages
+    ];
+    const frontCoverLidMesh = new THREE.Mesh(coverLidGeom, coverLidMaterials);
+    frontCoverLidMesh.renderOrder = 1;
+    frontCoverPivot.add(frontCoverLidMesh);
+
+    // Dynamic Folio Text Canvas Generator (High-Res Bhojpatra Page Text)
+    function renderFolioPageCanvas(pageType, spreadData, book) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1400;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // Aged Bhojpatra Parchment Base
+      ctx.fillStyle = '#dfcfb2';
+      ctx.fillRect(0, 0, W, H);
+
+      // Fiber texture washes
+      for (let i = 0; i < 4; i++) {
+        const grad = ctx.createRadialGradient(Math.random() * W, Math.random() * H, 20, W / 2, H / 2, W * 0.7);
+        grad.addColorStop(0, 'rgba(180, 140, 90, 0.15)');
+        grad.addColorStop(1, 'rgba(80, 50, 25, 0.05)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // Ornamental Temple Borders
+      ctx.strokeStyle = pageType === 'left' ? '#78350f' : '#991b1b';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(36, 36, W - 72, H - 72);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(48, 48, W - 96, H - 96);
+
+      if (pageType === 'left') {
+        // VERSO PAGE: Title, Author, Commentary & Analysis
+        ctx.textBaseline = 'alphabetic';
+        ctx.font = '600 22px "Cinzel", serif';
+        ctx.fillStyle = '#92641a';
+        ctx.textAlign = 'left';
+        ctx.fillText(spreadData.tag, 70, 96);
+
+        ctx.font = 'bold 44px "Rozha One", "Noto Serif Devanagari", serif';
+        ctx.fillStyle = '#1e140b';
+        ctx.fillText(book.title, 70, 165);
+
+        ctx.font = '600 20px "Cinzel", serif';
+        ctx.fillStyle = '#b93815';
+        ctx.fillText(`${book.englishTitle.toUpperCase()} • ${book.author}`, 70, 205);
+
+        // Divider
+        ctx.strokeStyle = 'rgba(146, 100, 26, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(70, 230);
+        ctx.lineTo(W - 70, 230);
+        ctx.stroke();
+
+        ctx.font = 'bold 30px "Rozha One", "Noto Serif Devanagari", serif';
+        ctx.fillStyle = '#7c2d12';
+        ctx.fillText(spreadData.leftHeading, 70, 290);
+
+        // Word-wrapped commentary with safe bounds
+        ctx.font = '500 24px "Noto Serif Devanagari", serif';
+        ctx.fillStyle = '#1e140b';
+        const words = spreadData.leftBody.split(' ');
+        let line = '';
+        let y = 350;
+        const maxTextY = H - 120;
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' ';
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > (W - 140) && n > 0) {
+            ctx.fillText(line, 70, y);
+            line = words[n] + ' ';
+            y += 42;
+            if (y > maxTextY) break;
+          } else {
+            line = testLine;
+          }
+        }
+        if (y <= maxTextY) {
+          ctx.fillText(line, 70, y);
+        }
+
+        // Bottom Page Number & Archival Accession Stamp
+        ctx.font = 'italic 18px "Cinzel", serif';
+        ctx.fillStyle = '#8c6f48';
+        ctx.textAlign = 'center';
+        const msCode = `AKSHAR-MS-${String(book.id + 1).padStart(3, '0')}`;
+        ctx.fillText(`— FOLIO VERSO • ${msCode} • ${book.era} —`, W / 2, H - 65);
+
+      } else {
+        // RECTO PAGE: Sacred Rubricated Shloka, Translit, Translation
+        ctx.textBaseline = 'alphabetic';
+        ctx.font = '600 22px "Cinzel", serif';
+        ctx.fillStyle = '#b93815';
+        ctx.textAlign = 'right';
+        ctx.fillText(`॥ ग्रन्थालङ्कारः ॥`, W - 70, 96);
+
+        ctx.font = 'bold 34px "Rozha One", "Noto Serif Devanagari", serif';
+        ctx.fillStyle = '#991b1b';
+        ctx.textAlign = 'center';
+        ctx.fillText(spreadData.rightHeading, W / 2, 175);
+
+        // Sacred Shloka Box
+        ctx.fillStyle = 'rgba(255, 245, 230, 0.7)';
+        ctx.fillRect(70, 220, W - 140, 360);
+        ctx.strokeStyle = '#b93815';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(70, 220, W - 140, 360);
+
+        ctx.font = '600 32px "Noto Serif Devanagari", serif';
+        ctx.fillStyle = '#181008';
+        ctx.textAlign = 'center';
+
+        const lines = spreadData.shloka.split('\n');
+        let sy = 285;
+        lines.forEach(l => {
+          ctx.fillText(l, W / 2, sy);
+          sy += 50;
+        });
+
+        // Transliteration
+        ctx.font = 'italic 22px "Cinzel", serif';
+        ctx.fillStyle = '#5a3c20';
+        ctx.textAlign = 'center';
+        const tlines = spreadData.translit.split('\n');
+        let ty = 630;
+        tlines.forEach(tl => {
+          ctx.fillText(tl, W / 2, ty);
+          ty += 34;
+        });
+
+        // Translation
+        ctx.font = '500 24px "Plus Jakarta Sans", sans-serif';
+        ctx.fillStyle = '#1a120b';
+        ctx.textAlign = 'left';
+
+        ctx.fillText('Universal Meaning:', 75, 730);
+        const transWords = spreadData.translation.split(' ');
+        let tline = '';
+        let try_pos = 770;
+        for (let n = 0; n < transWords.length; n++) {
+          const testLine = tline + transWords[n] + ' ';
+          if (ctx.measureText(testLine).width > (W - 150) && n > 0) {
+            ctx.fillText(tline, 75, try_pos);
+            tline = transWords[n] + ' ';
+            try_pos += 38;
+          } else {
+            tline = testLine;
+          }
+        }
+        ctx.fillText(tline, 75, try_pos);
+
+        // Bottom prompt
+        ctx.font = '600 20px "Cinzel", serif';
+        ctx.fillStyle = '#b93815';
+        ctx.textAlign = 'right';
+        ctx.fillText('FLIP PAGE / अग्रिम पृष्ठम् ❯', W - 75, H - 65);
+      }
+
+      return canvas;
+    }
+
+    // Static Left Page (Verso)
+    const leftPageGeom = new THREE.PlaneGeometry(leafW, leafH, 1, 1);
+    const leftPageMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0.05, side: THREE.DoubleSide });
+    leftPageMat.polygonOffset = true;
+    leftPageMat.polygonOffsetFactor = -2;
+    leftPageMat.polygonOffsetUnits = -2;
+    const leftPageMesh = new THREE.Mesh(leftPageGeom, leftPageMat);
+    leftPageMesh.position.set(-leafW / 2 - 0.01, 0, 0.025);
+    leftPageMesh.renderOrder = 10;
+    openBookRig.add(leftPageMesh);
+
+    // Static Right Page (Recto Base)
+    const rightPageGeom = new THREE.PlaneGeometry(leafW, leafH, 1, 1);
+    const rightPageMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0.05, side: THREE.DoubleSide });
+    rightPageMat.polygonOffset = true;
+    rightPageMat.polygonOffsetFactor = -2;
+    rightPageMat.polygonOffsetUnits = -2;
+    const rightPageMesh = new THREE.Mesh(rightPageGeom, rightPageMat);
+    rightPageMesh.position.set(leafW / 2 + 0.01, 0, 0.025);
+    rightPageMesh.renderOrder = 10;
+    openBookRig.add(rightPageMesh);
+
+    // 3D Flippable Page Leaf with Curvature Deformation!
+    // Pivot is at the spine (x = 0)
+    const turnLeafPivot = new THREE.Group();
+    turnLeafPivot.position.set(0, 0, 0.038);
+    openBookRig.add(turnLeafPivot);
+
+    const turnSegmentsX = 32;
+    const turnSegmentsY = 4;
+    const turnLeafGeom = new THREE.PlaneGeometry(leafW, leafH, turnSegmentsX, turnSegmentsY);
+    // Shift origin so left edge is at x = 0 (the spine hinge)
+    turnLeafGeom.translate(leafW / 2, 0, 0);
+
+    const turnLeafFrontMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0.05, side: THREE.FrontSide });
+    const turnLeafBackMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0.05, side: THREE.BackSide });
+
+    // Front of turning leaf
+    const turnLeafFrontMesh = new THREE.Mesh(turnLeafGeom, turnLeafFrontMat);
+    turnLeafFrontMesh.castShadow = true;
+    turnLeafFrontMesh.renderOrder = 20;
+    turnLeafPivot.add(turnLeafFrontMesh);
+
+    // Back of turning leaf
+    const turnLeafBackMesh = new THREE.Mesh(turnLeafGeom, turnLeafBackMat);
+    turnLeafBackMesh.castShadow = true;
+    turnLeafBackMesh.renderOrder = 20;
+    turnLeafPivot.add(turnLeafBackMesh);
+
+    /* ==========================================================================
+       14. STATE MACHINE (0: MANDALA, 1: SHELF, 2: 3D OPEN BOOK)
+       ========================================================================== */
+    const STATE_MANDALA = 0;
+    const STATE_SHELF = 1;
+    const STATE_BOOK = 2;
+
+    let appState = STATE_MANDALA;
+    let mandalaSpinVelocity = 0.0035;
+    let mandalaVortexProgress = 0; // 0 to 1 during transition
+    let mandalaTargetRadius = 1.82; // Dynamic radius that expands on click!
+
+    // Book Opening / Closing Cinematic Animation Variables
+    let isBookOpening = false;
+    let isBookClosing = false;
+    let bookOpenProgress = 0; // 0 (closed on shelf) -> 1 (open flat on desk)
+    let bookOpenStartPos = new THREE.Vector3();
+    let bookOpenStartRot = new THREE.Euler();
+    let bookTargetPos = new THREE.Vector3(0, -0.04, 1.8);
+    let bookTargetRot = new THREE.Euler(0.18, 0, 0);
+
+    // Shelf scroll variables
+    let s = 0;
+    let T = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartT = 0;
+    let hasDragged = false;
+    let wheelTimeout = null;
+
+    let hoveredIndex = -1;
+    let activeFilmIndex = 0;
+
+    // 3D Book Reading state
+    let flipProgress = 0; // 0 to 1 smooth parametric animation
+    let flipDirection = 1; // 1 = forward (R to L), -1 = backward (L to R)
+    let isPageFlipping = false;
+
+    // Smooth Ease In-Out Sine Curve
+    function easeInOutSine(x) {
+      return -(Math.cos(Math.PI * x) - 1) / 2;
+    }
+
+    // Mouse coordinates
+    let rawMouseX = window.innerWidth / 2;
+    let rawMouseY = window.innerHeight / 2;
+    let curCursorX = rawMouseX;
+    let curCursorY = rawMouseY;
+    let tiltX = 0;
+    let tiltY = 0;
+
+    const raycaster = new THREE.Raycaster();
+    const pointer3D = new THREE.Vector2(-999, -999);
+    const customCursor = document.getElementById('custom-cursor');
+
+    function smoothstep(x) {
+      const c = Math.max(0, Math.min(1, x));
+      return c * c * (3 - 2 * c);
+    }
+
+    function B(r) {
+      if (r <= -1) return -0.5;
+      if (r >= 1) return 0.5;
+      return (r + Math.sin(Math.PI * r) / Math.PI) / 2;
+    }
+
+    function F(r) {
+      return r * (ws + gap) + (d - ws + 1.6 * gap) * B(r);
+    }
+
+    // Update 3D Book Textures for Current Spread
+    function updateOpenBookTextures(book, spreadIdx) {
+      const spread = book.spreads[spreadIdx] || book.spreads[0];
+
+      // Update Left Verso Canvas
+      const leftCanvas = renderFolioPageCanvas('left', spread, book);
+      leftPageMat.map = new THREE.CanvasTexture(leftCanvas);
+      leftPageMat.map.anisotropy = 4;
+      leftPageMat.needsUpdate = true;
+      leftPageMesh.visible = true;
+      pageBlockLeft.visible = true;
+
+      // Update Right Recto Canvas
+      const rightCanvas = renderFolioPageCanvas('right', spread, book);
+      rightPageMat.map = new THREE.CanvasTexture(rightCanvas);
+      rightPageMat.map.anisotropy = 4;
+      rightPageMat.needsUpdate = true;
+      rightPageMesh.visible = true;
+      pageBlockRight.visible = true;
+
+      // Turn leaf texture (Front = Recto, Back = Verso)
+      turnLeafFrontMat.map = new THREE.CanvasTexture(rightCanvas);
+      turnLeafFrontMat.needsUpdate = true;
+
+      // Update Reader HUD
+      document.getElementById('reader-book-tag').textContent = `GRANTHALAYA VOL. ${String(book.id + 1).padStart(2, '0')} • ${book.era}`;
+      document.getElementById('reader-page-indicator').textContent = `FOLIO ${spreadIdx + 1} OF ${book.spreads.length} • ${spread.tag}`;
+
+      document.getElementById('btn-page-prev').disabled = (spreadIdx === 0);
+      document.getElementById('btn-page-next').disabled = (spreadIdx >= book.spreads.length - 1);
+    }
+
+    // Open Physical 3D Book Sequence with Cinematic Lift & Unfold Animation
+    function openPhysical3DBook(index) {
+      if (isBookOpening || isBookClosing) return;
+      const book = BOOKS_CATALOG[index];
+      if (!book) return;
+
+      activeBook = book;
+      currentSpreadIndex = 0;
+      appState = STATE_BOOK;
+
+      audioSanctum.playTempleBell();
+
+      // Find the shelf book's current world position & rotation
+      const shelfMesh = bookObjects[index];
+      bookOpenStartPos.copy(shelfMesh.position);
+      bookOpenStartRot.copy(shelfMesh.rotation);
+
+      // Hide shelf mesh while the open rig animates
+      shelfMesh.visible = false;
+
+      // Prepare Open Book Rig at the exact shelf position and closed pose!
+      openBookRig.visible = true;
+      openBookRig.position.copy(bookOpenStartPos);
+      openBookRig.rotation.copy(bookOpenStartRot);
+      openBookRig.scale.set(0.65, 0.65, 0.65);
+
+      // Cover lid is fully CLOSED at start (angle = 0, covering the pages!)
+      frontCoverPivot.rotation.y = 0;
+      frontCoverPivot.position.z = 0.035;
+      frontCoverPivot.visible = true;
+
+      // Update cover texture on the lid
+      const coverTex = new THREE.CanvasTexture(generateFrontCoverTextureCanvas(book));
+      coverLidFrontMat.map = coverTex;
+      coverLidFrontMat.needsUpdate = true;
+
+      // Update pages underneath
+      updateOpenBookTextures(book, 0);
+
+      // Left page starts hidden until cover opens past 90 degrees
+      leftPageMesh.visible = false;
+      pageBlockLeft.visible = false;
+
+      // Reset Turning Page Leaf
+      turnLeafPivot.rotation.y = 0;
+      turnLeafPivot.visible = false;
+      isPageFlipping = false;
+
+      // Hide Shelf Controls
+      document.getElementById('shelf-arrows').classList.remove('active');
+      document.getElementById('shelf-caption').classList.remove('active');
+      document.getElementById('shelf-bottom-hud').classList.remove('active');
+      document.getElementById('era-tabs').classList.remove('active');
+      document.getElementById('btn-mandala-view').style.display = 'none';
+
+      // Start 2-Stage Cinematic Animation:
+      // Stage 1: Float up from shelf toward center screen
+      // Stage 2: Hardcover swings open 180° revealing the pages!
+      isBookOpening = true;
+      bookOpenProgress = 0;
+
+      const openDuration = 1450;
+      const openStart = performance.now();
+
+      // Play soft paper rustle as the cover opens
+      setTimeout(() => {
+        audioSanctum.playPageRustle();
+      }, 600);
+
+      function stepOpen(now) {
+        const elapsed = now - openStart;
+        const p = Math.min(elapsed / openDuration, 1);
+        bookOpenProgress = p;
+
+        // Smooth Ease In-Out
+        const easeP = easeInOutSine(p);
+
+        // Stage 1: Smoothly float from shelf position to center reading desk
+        openBookRig.position.lerpVectors(bookOpenStartPos, bookTargetPos, easeP);
+        openBookRig.rotation.x = bookOpenStartRot.x + (bookTargetRot.x - bookOpenStartRot.x) * easeP;
+        openBookRig.rotation.y = bookOpenStartRot.y + (bookTargetRot.y - bookOpenStartRot.y) * easeP;
+        openBookRig.rotation.z = bookOpenStartRot.z + (bookTargetRot.z - bookOpenStartRot.z) * easeP;
+
+        // Scale up to full 80% reading size
+        const currentScale = 0.65 + (1.0 - 0.65) * easeP;
+        openBookRig.scale.set(currentScale, currentScale, currentScale);
+
+        // Stage 2: Cover unfolds! Starts opening after 35% of flight
+        if (p > 0.35) {
+          const coverP = (p - 0.35) / 0.65;
+          const coverEase = easeInOutSine(coverP);
+          // Swings from 0 to -Math.PI (-180 degrees!)
+          frontCoverPivot.rotation.y = -coverEase * Math.PI;
+          // Smoothly lower pivot from +0.035 to -0.055 so it sits under the left page block
+          frontCoverPivot.position.z = 0.035 - coverEase * 0.09;
+
+          if (coverP > 0.4) {
+            leftPageMesh.visible = true;
+            pageBlockLeft.visible = true;
+          }
+        }
+
+        if (p < 1) {
+          requestAnimationFrame(stepOpen);
+        } else {
+          isBookOpening = false;
+          frontCoverPivot.rotation.y = -Math.PI;
+          frontCoverPivot.position.z = -0.055;
+          leftPageMesh.visible = true;
+          pageBlockLeft.visible = true;
+          document.getElementById('book-reader-hud').classList.add('active');
+        }
+      }
+      requestAnimationFrame(stepOpen);
+    }
+
+    // Close 3D Book & Return to Shelf with Smooth Reverse Animation
+    function closePhysical3DBook() {
+      if (appState !== STATE_BOOK || isBookClosing || isBookOpening) return;
+
+      isBookClosing = true;
+      document.getElementById('book-reader-hud').classList.remove('active');
+
+      audioSanctum.playPageRustle();
+
+      const closeDuration = 1200;
+      const closeStart = performance.now();
+
+      // Find the shelf book's target slot
+      const targetIndex = activeBook ? activeBook.id : 0;
+      const shelfMesh = bookObjects[targetIndex];
+
+      function stepClose(now) {
+        const elapsed = now - closeStart;
+        const p = Math.min(elapsed / closeDuration, 1);
+        const easeP = easeInOutSine(p);
+
+        // Stage 1: Cover closes (0 to 0.65)
+        if (p < 0.65) {
+          const coverCloseP = p / 0.65;
+          const coverEase = easeInOutSine(coverCloseP);
+          // Swings from -Math.PI back to 0
+          frontCoverPivot.rotation.y = -Math.PI + coverEase * Math.PI;
+          // Smoothly raise pivot from -0.055 back up to +0.035
+          frontCoverPivot.position.z = -0.055 + coverEase * 0.09;
+          if (coverCloseP > 0.6) {
+            leftPageMesh.visible = false;
+            pageBlockLeft.visible = false;
+          }
+        } else {
+          frontCoverPivot.rotation.y = 0;
+          frontCoverPivot.position.z = 0.035;
+          leftPageMesh.visible = false;
+          pageBlockLeft.visible = false;
+        }
+
+        // Stage 2: Glide back to shelf slot
+        if (p > 0.3) {
+          const returnP = (p - 0.3) / 0.7;
+          const returnEase = easeInOutSine(returnP);
+          openBookRig.position.lerpVectors(bookTargetPos, shelfMesh.position, returnEase);
+          openBookRig.rotation.x = bookTargetRot.x + (shelfMesh.rotation.x - bookTargetRot.x) * returnEase;
+          openBookRig.rotation.y = bookTargetRot.y + (shelfMesh.rotation.y - bookTargetRot.y) * returnEase;
+          openBookRig.rotation.z = bookTargetRot.z + (shelfMesh.rotation.z - bookTargetRot.z) * returnEase;
+
+          const currentScale = 1.0 - (1.0 - 0.65) * returnEase;
+          openBookRig.scale.set(currentScale, currentScale, currentScale);
+        }
+
+        if (p < 1) {
+          requestAnimationFrame(stepClose);
+        } else {
+          // Play leather closure thud when snapping into shelf
+          audioSanctum.playBookCloseThud();
+
+          isBookClosing = false;
+          openBookRig.visible = false;
+          shelfMesh.visible = true;
+          appState = STATE_SHELF;
+
+          document.getElementById('shelf-arrows').classList.add('active');
+          document.getElementById('shelf-caption').classList.add('active');
+          document.getElementById('shelf-bottom-hud').classList.add('active');
+          document.getElementById('era-tabs').classList.add('active');
+          document.getElementById('btn-mandala-view').style.display = 'flex';
+        }
+      }
+      requestAnimationFrame(stepClose);
+    }
+
+    // Page Flip Forward (Turning from Right to Left)
+    function flipPageForward() {
+      if (!activeBook || currentSpreadIndex >= activeBook.spreads.length - 1 || isPageFlipping) return;
+
+      isPageFlipping = true;
+      flipDirection = 1;
+      flipProgress = 0;
+      turnLeafPivot.visible = true;
+
+      // Front of turning leaf has CURRENT recto page
+      const currentSpread = activeBook.spreads[currentSpreadIndex];
+      const nextSpread = activeBook.spreads[currentSpreadIndex + 1];
+
+      const frontCanvas = renderFolioPageCanvas('right', currentSpread, activeBook);
+      turnLeafFrontMat.map = new THREE.CanvasTexture(frontCanvas);
+      turnLeafFrontMat.needsUpdate = true;
+
+      // Back of turning leaf will be the NEW left verso page!
+      const backCanvas = renderFolioPageCanvas('left', nextSpread, activeBook);
+      const backTex = new THREE.CanvasTexture(backCanvas);
+      backTex.wrapS = THREE.RepeatWrapping;
+      backTex.repeat.x = -1;
+      backTex.offset.x = 1;
+      turnLeafBackMat.map = backTex;
+      turnLeafBackMat.needsUpdate = true;
+
+      // Update the underlying right page to the NEW recto page immediately
+      const newRightCanvas = renderFolioPageCanvas('right', nextSpread, activeBook);
+      rightPageMat.map = new THREE.CanvasTexture(newRightCanvas);
+      rightPageMat.map.anisotropy = 4;
+      rightPageMat.needsUpdate = true;
+
+      audioSanctum.playPageRustle();
+
+      // Graceful, tactile 1.25s page flip animation!
+      const flipDuration = 1250;
+      const flipStart = performance.now();
+
+      function stepFlip(now) {
+        const elapsed = now - flipStart;
+        const p = Math.min(elapsed / flipDuration, 1);
+        flipProgress = p;
+
+        if (p < 1) {
+          requestAnimationFrame(stepFlip);
+        } else {
+          // Animation complete!
+          currentSpreadIndex++;
+          updateOpenBookTextures(activeBook, currentSpreadIndex);
+          turnLeafPivot.visible = false;
+          turnLeafPivot.rotation.y = 0;
+          isPageFlipping = false;
+        }
+      }
+      requestAnimationFrame(stepFlip);
+    }
+
+    // Page Flip Backward (Turning from Left to Right)
+    function flipPageBackward() {
+      if (!activeBook || currentSpreadIndex <= 0 || isPageFlipping) return;
+
+      isPageFlipping = true;
+      flipDirection = -1;
+      flipProgress = 0;
+      turnLeafPivot.visible = true;
+
+      const currentSpread = activeBook.spreads[currentSpreadIndex];
+      const prevSpread = activeBook.spreads[currentSpreadIndex - 1];
+
+      // Front of turning leaf has PREVIOUS recto page
+      const frontCanvas = renderFolioPageCanvas('right', prevSpread, activeBook);
+      turnLeafFrontMat.map = new THREE.CanvasTexture(frontCanvas);
+      turnLeafFrontMat.needsUpdate = true;
+
+      // Back of turning leaf has CURRENT verso page
+      const backCanvas = renderFolioPageCanvas('left', currentSpread, activeBook);
+      const backTex = new THREE.CanvasTexture(backCanvas);
+      backTex.wrapS = THREE.RepeatWrapping;
+      backTex.repeat.x = -1;
+      backTex.offset.x = 1;
+      turnLeafBackMat.map = backTex;
+      turnLeafBackMat.needsUpdate = true;
+
+      // Update the underlying left page to the PREVIOUS verso page immediately
+      const newLeftCanvas = renderFolioPageCanvas('left', prevSpread, activeBook);
+      leftPageMat.map = new THREE.CanvasTexture(newLeftCanvas);
+      leftPageMat.map.anisotropy = 4;
+      leftPageMat.needsUpdate = true;
+
+      audioSanctum.playPageRustle();
+
+      const flipDuration = 1250;
+      const flipStart = performance.now();
+
+      function stepFlipBack(now) {
+        const elapsed = now - flipStart;
+        const p = Math.min(elapsed / flipDuration, 1);
+        flipProgress = p;
+
+        if (p < 1) {
+          requestAnimationFrame(stepFlipBack);
+        } else {
+          currentSpreadIndex--;
+          updateOpenBookTextures(activeBook, currentSpreadIndex);
+          turnLeafPivot.visible = false;
+          turnLeafPivot.rotation.y = 0;
+          isPageFlipping = false;
+        }
+      }
+      requestAnimationFrame(stepFlipBack);
+    }
+
+    // Page flip buttons
+    document.getElementById('btn-page-next').addEventListener('click', flipPageForward);
+    document.getElementById('btn-page-prev').addEventListener('click', flipPageBackward);
+    document.getElementById('reader-close-btn').addEventListener('click', closePhysical3DBook);
+
+    /* ==========================================================================
+       13C. AUTHORS DATABASE & SHOWCASE REGISTRY
+       ========================================================================== */
+    const AUTHORS_DATABASE = [
+      {
+        nameDev: "महाकवि कालिदास",
+        nameEn: "Mahakavi Kalidasa",
+        initial: "का",
+        honorific: "कविकुलगुरु • Sovereign Master of Classical Sanskrit Simile (Upama)",
+        era: "Classical Sanskrit (c. 4th Century CE)",
+        category: "classical",
+        bio: "Widely celebrated as the supreme poet and dramatist of classical Sanskrit literature. Globally acclaimed for his mastery of 'Upama' (simile), deep psychological exploration of love, and sublime depictions of India's sacred natural geography.",
+        works: [
+          { title: "मेघदूतम्", id: 0 },
+          { title: "अभिज्ञानशाकुन्तलम्", id: 6 },
+          { title: "ऋतुसंहारम्", id: 12 },
+          { title: "कुमारसम्भवम्", id: 18 }
+        ]
+      },
+      {
+        nameDev: "वैदिक ऋषयः",
+        nameEn: "Vedic Risis & Seers",
+        initial: "ऋ",
+        honorific: "मन्त्रद्रष्टा • Seers of Cosmic Harmony & Primordial Truth",
+        era: "Vedic Period (c. 1500–500 BCE)",
+        category: "vedic",
+        bio: "The enlightened sages who heard (Sruti) the eternal cosmic vibrations in deep meditation within Himalayan hermitages, composing the immortal hymns of unity, universal order (Rta), and transcendent self-realization.",
+        works: [
+          { title: "अरण्यक", id: 1 },
+          { title: "कठोपनिषद्", id: 20 }
+        ]
+      },
+      {
+        nameDev: "गोस्वामी तुलसीदास",
+        nameEn: "Goswami Tulsidas",
+        initial: "तु",
+        honorific: "भक्तिकाल के शिरोमणि • Incarnation of Devotional Poetics",
+        era: "Bhakti Renaissance (1532–1623 CE)",
+        category: "classical",
+        bio: "The revered poet-philosopher who brought the Ramayana into Awadhi vernacular verse, uniting diverse spiritual streams through pure devotion (Bhakti), ethical righteousness (Maryada), and unmatched musicality.",
+        works: [
+          { title: "रामचरितमानस", id: 2 }
+        ]
+      },
+      {
+        nameDev: "जयशंकर प्रसाद",
+        nameEn: "Jaishankar Prasad",
+        initial: "प्र",
+        honorific: "छायावाद के आधारस्तम्भ • Architect of Modern Epic Mysticism",
+        era: "Modern Hindi Chhayavada (1889–1937 CE)",
+        category: "modern",
+        bio: "A titan of modern Hindi literature. In 'Kamayani', he synthesized ancient Vedic symbolism, historical consciousness, and Kashmiri Shaivism with modern psychology to explore human anxiety and cosmic equilibrium.",
+        works: [
+          { title: "कामायनी", id: 3 }
+        ]
+      },
+      {
+        nameDev: "महाकवि जयदेव",
+        nameEn: "Jayadeva",
+        initial: "जय",
+        honorific: "गीतिकाव्य के अमर शिल्पी • Composer of Lyrical Devotion",
+        era: "Classical Sanskrit (12th Century CE)",
+        category: "classical",
+        bio: "Court poet of Bengal celebrated for 'Gita Govinda'. His rhythmic, melodious Sanskrit Padavalis revolutionized Indian performing arts, classical ragas, and Odissi/Bharatanatyam traditions.",
+        works: [
+          { title: "गीतगोविन्दम्", id: 4 }
+        ]
+      },
+      {
+        nameDev: "रामधारी सिंह 'दिनकर'",
+        nameEn: "Ramdhari Singh 'Dinkar'",
+        initial: "दि",
+        honorific: "राष्ट्रकवि • Voice of Valour, Conscience & Existential Fire",
+        era: "Modern Hindi (1908–1974 CE)",
+        category: "modern",
+        bio: "Hailed as the 'Rashtrakavi' (National Poet) of modern India. Renowned for his fierce poetry of Veer Rasa and moral introspection in 'Rashmirathi' and the Jnanpith Award-winning 'Urvashi'.",
+        works: [
+          { title: "रश्मिरथी", id: 5 },
+          { title: "उर्वशी", id: 25 }
+        ]
+      },
+      {
+        nameDev: "हरिवंश राय बच्चन",
+        nameEn: "Harivansh Rai Bachchan",
+        initial: "ब",
+        honorific: "हालावाद के प्रवर्तक • Pioneer of Modern Hindi Lyrical Romantism",
+        era: "Modern Hindi (1907–2003 CE)",
+        category: "modern",
+        bio: "Celebrated for introducing the philosophical 'Halavada' movement with 'Madhushala', using wine and the tavern as profound metaphors for human longing, existential freedom, and secular fellowship.",
+        works: [
+          { title: "मधुशाला", id: 7 }
+        ]
+      },
+      {
+        nameDev: "आचार्य गौड़पाद",
+        nameEn: "Acharya Gaudapada",
+        initial: "गौ",
+        honorific: "अद्वैत वेदान्त के आदि आचार्य • Master of Non-Dual Consciousness",
+        era: "Vedic / Classical (c. 6th Century CE)",
+        category: "vedic",
+        bio: "The foundational preceptor of Advaita Vedanta and guru of Govinda Bhagavatpada. His 'Mandukya Karika' systematically expounds 'Ajativada' (the truth of unoriginated non-dual reality).",
+        works: [
+          { title: "माण्डूक्यकारिका", id: 8 }
+        ]
+      },
+      {
+        nameDev: "मुंशी प्रेमचंद",
+        nameEn: "Munshi Premchand",
+        initial: "प्रे",
+        honorific: "उपन्यास सम्राट • Father of Realistic Indian Fiction",
+        era: "Modern Hindi & Urdu (1880–1936 CE)",
+        category: "modern",
+        bio: "Pioneered socio-realistic fiction in Indian literature. His novels 'Godan' and 'Nirmala' laid bare the exploitation of rural peasantry and women's struggles with empathy, wit, and moral clarity.",
+        works: [
+          { title: "गोदान", id: 9 },
+          { title: "निर्मला", id: 17 }
+        ]
+      },
+      {
+        nameDev: "महर्षि अष्टावक्र",
+        nameEn: "Sage Ashtavakra",
+        initial: "अ",
+        honorific: "आत्मज्ञान के प्रत्यक्षदर्शी • Seer of Instant Liberation",
+        era: "Vedic Antiquity",
+        category: "vedic",
+        bio: "The great non-dual philosopher celebrated in the Mahabharata. His dialogues with King Janaka in the 'Ashtavakra Gita' offer a direct revelation that consciousness is ever-free, blissful, and unattached.",
+        works: [
+          { title: "अष्टावक्रगीता", id: 10 }
+        ]
+      },
+      {
+        nameDev: "धर्मवीर भारती",
+        nameEn: "Dharamvir Bharati",
+        initial: "भा",
+        honorific: "नई कविता एवं आधुनिक नाटक के युगनायक",
+        era: "Modern Hindi (1926–1997 CE)",
+        category: "modern",
+        bio: "Visionary author of 'Gunahon Ka Devta' (a classic exploration of tragic romantic idealism) and the verse-drama 'Andha Yug' (a profound allegory of post-war disillusionment on the final day of the Mahabharata).",
+        works: [
+          { title: "गुनाहों का देवता", id: 11 },
+          { title: "अंधा युग", id: 19 }
+        ]
+      },
+      {
+        nameDev: "भीष्म साहनी",
+        nameEn: "Bhisham Sahni",
+        initial: "भी",
+        honorific: "मानवीय संवेदना के अमर कथाकार",
+        era: "Modern Hindi (1915–2003 CE)",
+        category: "modern",
+        bio: "Distinguished playwright and novelist whose monumental work 'Tamas' captured the harrowing communal tragedy of the 1947 Partition with devastating historical fidelity and unflinching humanism.",
+        works: [
+          { title: "तमस", id: 13 }
+        ]
+      },
+      {
+        nameDev: "महर्षि वाल्मीकि",
+        nameEn: "Maharshi Valmiki",
+        initial: "वा",
+        honorific: "आदिकवि • The First Epic Bard of Sanskrit Literature",
+        era: "Vedic & Epic Period (c. 1000 BCE)",
+        category: "vedic",
+        bio: "Revered as the 'Adikavi', creator of the Anushtup meter. Beyond the Ramayana, tradition ascribes to his lineage the 'Yoga Vasistha', one of the most sublime philosophical treatises on mind and cosmic consciousness.",
+        works: [
+          { title: "योगवासिष्ठम्", id: 14 }
+        ]
+      },
+      {
+        nameDev: "महादेवी वर्मा",
+        nameEn: "Mahadevi Varma",
+        initial: "दे",
+        honorific: "आधुनिक युग की मीरा • Doyenne of Mystical Lyricism",
+        era: "Modern Hindi (1907–1987 CE)",
+        category: "modern",
+        bio: "One of the greatest Hindi poets of the 20th century. Her poetry collection 'Yama' earned the Jnanpith Award for its spiritual depth, lyrical elegance, and contemplation of the infinite.",
+        works: [
+          { title: "यामा", id: 15 }
+        ]
+      },
+      {
+        nameDev: "महाकवि बाणभट्ट",
+        nameEn: "Banabhatta",
+        initial: "बा",
+        honorific: "गद्य सम्राट • Master of Classical Sanskrit Prose",
+        era: "Classical Sanskrit (c. 7th Century CE)",
+        category: "classical",
+        bio: "Asthana Kavi of Emperor Harsha of Kannauj. His novel 'Kadambari' is recognized as one of the world's earliest romantic epics, celebrated for its complex narrative architecture and lush descriptive cadence.",
+        works: [
+          { title: "कादम्बरी", id: 16 }
+        ]
+      },
+      {
+        nameDev: "सच्चिदानंद हीरानंद वात्स्यायन 'अज्ञेय'",
+        nameEn: "S.H. Vatsyayan 'Agyeya'",
+        initial: "अ",
+        honorific: "प्रयोगवाद व नई कविता के प्रणेता",
+        era: "Modern Hindi (1911–1987 CE)",
+        category: "modern",
+        bio: "A titan of modern Hindi literature who launched the 'Tar Saptak' experimentalist movement. His psychological masterpiece 'Shekhar: Ek Jivani' reshaped the Hindi novel through fearless introspection.",
+        works: [
+          { title: "शेखर: एक जीवनी", id: 21 }
+        ]
+      },
+      {
+        nameDev: "आदि शंकराचार्य",
+        nameEn: "Adi Shankaracharya",
+        initial: "शं",
+        honorific: "जगद्गुरु • Reviver of Advaita Vedanta & Sacred Stotras",
+        era: "Classical India (c. 8th Century CE)",
+        category: "classical",
+        bio: "The philosopher-monk who revitalized Sanatana Dharma across the Indian subcontinent. Author of landmark commentaries on the Upanishads and sublime devotional hymns like 'Saundarya Lahari'.",
+        works: [
+          { title: "सौन्दर्यलहरी", id: 22 }
+        ]
+      },
+      {
+        nameDev: "फणीश्वर नाथ 'रेणु'",
+        nameEn: "Phanishwar Nath 'Renu'",
+        initial: "रे",
+        honorific: "आंचलिक कथा-साहित्य के अग्रदूत",
+        era: "Modern Hindi (1921–1977 CE)",
+        category: "modern",
+        bio: "Pioneered the 'Aanchalik' (regional) novel in Hindi with 'Maila Anchal', bringing the folklore, dialect, struggles, and vitality of rural Mithila and Purnea to national prominence.",
+        works: [
+          { title: "मैला आंचल", id: 23 }
+        ]
+      },
+      {
+        nameDev: "विशाखदत्त",
+        nameEn: "Vishakhadatta",
+        initial: "वि",
+        honorific: "राजनीतिक नाट्यकला के अद्वितीय शिल्पी",
+        era: "Classical Sanskrit (c. 5th Century CE)",
+        category: "classical",
+        bio: "Classical dramatist celebrated for 'Mudrarakshasa', a masterclass in Sanskrit political intrigue focused on the intellectual duel between Chanakya and Rakshasa.",
+        works: [
+          { title: "मुद्राराक्षसम्", id: 24 }
+        ]
+      },
+      {
+        nameDev: "आचार्य शान्तिदेव",
+        nameEn: "Acharya Shantideva",
+        initial: "शा",
+        honorific: "बोधिसत्वचर्या के अमर उपदेशक",
+        era: "Classical India (c. 8th Century CE)",
+        category: "classical",
+        bio: "Nalanda master revered for 'Bodhicaryavatara' (The Way of the Bodhisattva), one of the most moving philosophical treatises on universal compassion, selfless sacrifice, and mind training.",
+        works: [
+          { title: "बोधिसत्त्वचर्यावतार", id: 26 }
+        ]
+      },
+      {
+        nameDev: "कमलेश्वर",
+        nameEn: "Kamleshwar",
+        initial: "क",
+        honorific: "नई कहानी आंदोलन के अगुआ कथाकार",
+        era: "Modern Hindi (1932–2007 CE)",
+        category: "modern",
+        bio: "Celebrated author of 'Kitne Pakistan', an allegorical court of history examining partition, fanaticism, and human borders, awarded the Sahitya Akademi Award.",
+        works: [
+          { title: "कितने पाकिस्तान", id: 27 }
+        ]
+      },
+      {
+        nameDev: "महर्षि चरक",
+        nameEn: "Maharshi Charaka",
+        initial: "च",
+        honorific: "आयुर्वेद के अमर प्रणेता • Father of Indic Medicine",
+        era: "Vedic / Classical Antiquity",
+        category: "vedic",
+        bio: "The foundational physician of Ayurveda whose 'Charaka Samhita' unified holistic health, psychosomatic medicine, botany, and the sacred code of medical ethics.",
+        works: [
+          { title: "चरकसंहिता", id: 28 }
+        ]
+      },
+      {
+        nameDev: "बंकिमचन्द्र चट्टोपाध्याय",
+        nameEn: "Bankim Chandra Chattopadhyay",
+        initial: "बं",
+        honorific: "साहित्य सम्राट • Creator of Vande Mataram",
+        era: "Modern Renaissance (1838–1894 CE)",
+        category: "modern",
+        bio: "Colossus of the Indian Renaissance. Author of 'Anandamath', which contained 'Vande Mataram' and ignited the spiritual devotion of the Indian freedom movement.",
+        works: [
+          { title: "आनन्दमठ", id: 31 }
+        ]
+      }
+    ];
+
+    /* ==========================================================================
+       13D. MODAL CONTROLS & DYNAMIC GRID RENDERERS
+       ========================================================================== */
+    function openModal(modalId) {
+      closeAllModals();
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('active');
+        audioSanctum.playHarpPluck(4);
+      }
+    }
+
+    function closeAllModals() {
+      document.querySelectorAll('.sanctum-modal-backdrop').forEach(m => m.classList.remove('active'));
+    }
+
+    // Modal Triggers
+    document.getElementById('btn-catalog').addEventListener('click', () => {
+      openModal('modal-catalog');
+      renderCatalogGrid();
+    });
+
+    document.getElementById('btn-authors').addEventListener('click', () => {
+      openModal('modal-authors');
+      renderAuthorsGrid();
+    });
+
+    document.getElementById('btn-copyright').addEventListener('click', () => {
+      openModal('modal-copyright');
+    });
+
+    document.getElementById('bottom-colophon-link').addEventListener('click', () => {
+      openModal('modal-copyright');
+    });
+
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        closeAllModals();
+      });
+    });
+
+    document.querySelectorAll('.sanctum-modal-backdrop').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeAllModals();
+      });
+    });
+
+    // Select Book from Catalog/Authors and Open in 3D
+    function selectBookAndOpen(index) {
+      closeAllModals();
+
+      if (appState === STATE_MANDALA) {
+        appState = STATE_SHELF;
+        mandalaVortexProgress = 1;
+        document.getElementById('landing-overlay').classList.add('fade-out');
+        document.getElementById('shelf-arrows').classList.add('active');
+        document.getElementById('shelf-caption').classList.add('active');
+        document.getElementById('shelf-bottom-hud').classList.add('active');
+        document.getElementById('era-tabs').classList.add('active');
+        document.getElementById('btn-mandala-view').style.display = 'flex';
+      }
+
+      T = index;
+      s = index;
+      activeFilmIndex = index;
+      updateCaption(index, 1);
+
+      setTimeout(() => {
+        openPhysical3DBook(index);
+      }, 240);
+    }
+
+    // Render Catalog Cards Grid
+    function renderCatalogGrid() {
+      const container = document.getElementById('catalog-cards-container');
+      const searchVal = (document.getElementById('catalog-search-input').value || '').toLowerCase().trim();
+      const activePill = document.querySelector('#catalog-filter-pills .filter-pill.active');
+      const activeFilter = activePill ? activePill.dataset.filter : 'all';
+
+      container.innerHTML = '';
+
+      const filtered = BOOKS_CATALOG.filter(b => {
+        const matchesEra = (activeFilter === 'all' || b.eraCategory === activeFilter);
+        const matchesQuery = !searchVal || 
+          b.title.toLowerCase().includes(searchVal) ||
+          b.englishTitle.toLowerCase().includes(searchVal) ||
+          b.author.toLowerCase().includes(searchVal) ||
+          b.genre.toLowerCase().includes(searchVal);
+        return matchesEra && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #a89377; padding: 40px; font-family: var(--font-serif-roman);">No matching volumes found in the sanctuary archives.</div>`;
+        return;
+      }
+
+      filtered.forEach(b => {
+        const card = document.createElement('div');
+        card.className = 'catalog-card';
+        card.style.borderTop = `3px solid ${b.accentColor || '#d4a34b'}`;
+
+        const excerpt = (b.spreads && b.spreads[0]) ? b.spreads[0].leftBody : '';
+
+        card.innerHTML = `
+          <div class="catalog-card-header">
+            <span class="catalog-vol-badge" style="color: ${b.accentColor || '#d4a34b'};">VOL. ${String(b.id + 1).padStart(2, '0')}</span>
+            <span class="catalog-era-badge">${b.era}</span>
+          </div>
+          <div class="catalog-card-titles">
+            <div class="catalog-title-dev">${b.title}</div>
+            <div class="catalog-title-en">${b.englishTitle}</div>
+            <div class="catalog-author">✦ ${b.author}</div>
+          </div>
+          <div class="catalog-excerpt">${excerpt}</div>
+          <button class="catalog-read-btn" data-book-id="${b.id}">
+            <span>✦ Read in 3D</span>
+          </button>
+        `;
+
+        card.querySelector('.catalog-read-btn').addEventListener('click', () => {
+          selectBookAndOpen(b.id);
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    // Render Authors Grid
+    function renderAuthorsGrid() {
+      const container = document.getElementById('authors-cards-container');
+      const searchVal = (document.getElementById('authors-search-input').value || '').toLowerCase().trim();
+      const activePill = document.querySelector('#authors-filter-pills .filter-pill.active');
+      const activeFilter = activePill ? activePill.dataset.authorFilter : 'all';
+
+      container.innerHTML = '';
+
+      const filtered = AUTHORS_DATABASE.filter(a => {
+        const matchesCategory = (activeFilter === 'all' || a.category === activeFilter);
+        const matchesQuery = !searchVal ||
+          a.nameDev.toLowerCase().includes(searchVal) ||
+          a.nameEn.toLowerCase().includes(searchVal) ||
+          a.honorific.toLowerCase().includes(searchVal) ||
+          a.era.toLowerCase().includes(searchVal);
+        return matchesCategory && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #a89377; padding: 40px; font-family: var(--font-serif-roman);">No matching authors found in the archives.</div>`;
+        return;
+      }
+
+      filtered.forEach(a => {
+        const card = document.createElement('div');
+        card.className = 'author-card';
+
+        const worksHtml = a.works.map(w => `
+          <button class="author-work-pill" data-book-id="${w.id}" title="Open ${w.title} in 3D">
+            <span>📖</span>
+            <span>${w.title}</span>
+          </button>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="author-header">
+            <div class="author-avatar">${a.initial}</div>
+            <div class="author-info">
+              <div class="author-name-dev">${a.nameDev}</div>
+              <div class="author-name-en">${a.nameEn}</div>
+              <div class="author-honorific">${a.honorific}</div>
+              <div class="author-era-tag">${a.era}</div>
+            </div>
+          </div>
+          <div class="author-bio">${a.bio}</div>
+          <div class="author-works-container">
+            <div class="author-works-label">Published Volumes in Sanctuary:</div>
+            <div class="author-works-list">
+              ${worksHtml}
+            </div>
+          </div>
+        `;
+
+        card.querySelectorAll('.author-work-pill').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const bId = parseInt(btn.dataset.bookId, 10);
+            selectBookAndOpen(bId);
+          });
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    // Modal Search and Filter Listeners
+    document.getElementById('catalog-search-input').addEventListener('input', renderCatalogGrid);
+    document.querySelectorAll('#catalog-filter-pills .filter-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#catalog-filter-pills .filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        renderCatalogGrid();
+      });
+    });
+
+    document.getElementById('authors-search-input').addEventListener('input', renderAuthorsGrid);
+    document.querySelectorAll('#authors-filter-pills .filter-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#authors-filter-pills .filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        renderAuthorsGrid();
+      });
+    });
+
+    // Transition from Mandala Landing to Shelf Hero
+    function transitionMandalaToShelf() {
+      if (appState !== STATE_MANDALA) return;
+
+      audioSanctum.playTempleBell();
+      document.getElementById('landing-overlay').classList.add('fade-out');
+
+      // Expand the circle into a spinning loading vortex and transition to shelf!
+      const startTime = performance.now();
+      const vortexDuration = 1600;
+
+      function vortexStep(now) {
+        const p = Math.min((now - startTime) / vortexDuration, 1);
+        // Smooth ease in-out for the loading circle expansion
+        const easeP = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+
+        mandalaVortexProgress = p;
+        // Expand circle smoothly from 1.82 out to 5.8 as it spins faster like a loading ring
+        mandalaTargetRadius = 1.82 + easeP * 3.98;
+        mandalaSpinVelocity = 0.004 + easeP * 0.075;
+
+        if (p < 1) {
+          requestAnimationFrame(vortexStep);
+        } else {
+          // Enter Shelf Mode smoothly!
+          appState = STATE_SHELF;
+          mandalaVortexProgress = 1;
+          document.getElementById('shelf-arrows').classList.add('active');
+          document.getElementById('shelf-caption').classList.add('active');
+          document.getElementById('shelf-bottom-hud').classList.add('active');
+          document.getElementById('era-tabs').classList.add('active');
+          updateCaption(0, 1);
+        }
+      }
+      requestAnimationFrame(vortexStep);
+    }
+
+    document.getElementById('landing-akshar-orb').addEventListener('click', transitionMandalaToShelf);
+    document.getElementById('landing-cta-btn').addEventListener('click', transitionMandalaToShelf);
+
+    // Return to Mandala View
+    document.getElementById('btn-mandala-view').addEventListener('click', () => {
+      if (appState === STATE_SHELF) {
+        appState = STATE_MANDALA;
+        mandalaVortexProgress = 0;
+        mandalaTargetRadius = 1.82;
+        mandalaSpinVelocity = 0.0035;
+        document.getElementById('landing-overlay').classList.remove('fade-out');
+        document.getElementById('shelf-arrows').classList.remove('active');
+        document.getElementById('shelf-caption').classList.remove('active');
+        document.getElementById('shelf-bottom-hud').classList.remove('active');
+        document.getElementById('era-tabs').classList.remove('active');
+      }
+    });
+
+    document.getElementById('btn-home').addEventListener('click', () => {
+      if (appState === STATE_BOOK) closePhysical3DBook();
+      if (appState === STATE_SHELF) {
+        T = 0;
+      }
+    });
+
+    // Caption and Era Tabs
+    const capTitle = document.getElementById('cap-title');
+    const capSub = document.getElementById('cap-sub');
+    const capMeta = document.getElementById('cap-meta');
+
+    function updateCaption(index, dir = 1) {
+      const book = BOOKS_CATALOG[index];
+      if (!book) return;
+
+      [capTitle, capSub, capMeta].forEach(el => {
+        el.style.transform = `translateY(${dir * 110}%)`;
+      });
+
+      setTimeout(() => {
+        capTitle.textContent = book.title;
+        capSub.textContent = `${book.englishTitle.toUpperCase()} • ${book.author}`;
+        capMeta.textContent = `${book.genre.toUpperCase()} • ${book.era}`;
+
+        [capTitle, capSub, capMeta].forEach(el => {
+          el.style.transform = 'translateY(0%)';
+        });
+      }, 140);
+
+      document.getElementById('current-volume-indicator').textContent = `${String(book.id + 1).padStart(2, '0')} / 32`;
+      document.getElementById('current-volume-genre').textContent = `${book.genre} • ${book.title}`;
+
+      updateEraTabUI(book.eraCategory);
+    }
+
+    const eraTabIndicator = document.getElementById('era-tab-indicator');
+    const eraButtons = document.querySelectorAll('.era-tab-btn');
+
+    function updateEraTabUI(category) {
+      eraButtons.forEach(btn => {
+        if (btn.dataset.era === category) {
+          btn.classList.add('active');
+          eraTabIndicator.style.width = `${btn.offsetWidth}px`;
+          eraTabIndicator.style.transform = `translateX(${btn.offsetLeft}px)`;
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    eraButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const era = btn.dataset.era;
+        if (era === 'all') {
+          T = 0;
+        } else {
+          const matchIdx = BOOKS_CATALOG.findIndex(b => b.eraCategory === era);
+          if (matchIdx !== -1) {
+            const curr = Math.round(T) % 32;
+            let diff = matchIdx - curr;
+            if (diff > 16) diff -= 32;
+            if (diff < -16) diff += 32;
+            T = Math.round(T) + diff;
+          }
+        }
+      });
+    });
+
+    /* ==========================================================================
+       15. INPUT HANDLING (SHELF SCRUB, CLICK TO OPEN BOOK, KEYS)
+       ========================================================================== */
+    window.addEventListener('pointermove', (e) => {
+      rawMouseX = e.clientX;
+      rawMouseY = e.clientY;
+      pointer3D.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer3D.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      customCursor.style.opacity = '1';
+
+      if (isDragging && appState === STATE_SHELF) {
+        const dx = e.clientX - dragStartX;
+        if (Math.abs(dx) > 5) {
+          hasDragged = true;
+          const pixelsPerUnit = (window.innerWidth / 14);
+          T = dragStartT - dx / pixelsPerUnit;
+        }
+      }
+    });
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.top-sanctum-bar') || e.target.closest('.era-tabs-container') || e.target.closest('.shelf-nav-arrows') || e.target.closest('.book-reader-hud') || e.target.closest('.landing-overlay') || e.target.closest('.sanctum-modal-backdrop')) {
+        return;
+      }
+      if (appState === STATE_SHELF) {
+        isDragging = true;
+        hasDragged = false;
+        dragStartX = e.clientX;
+        dragStartT = T;
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (isDragging) {
+        isDragging = false;
+        if (hasDragged) T = Math.round(T);
+      }
+    });
+
+    window.addEventListener('wheel', (e) => {
+      if (document.querySelector('.sanctum-modal-backdrop.active')) return;
+      if (appState === STATE_SHELF) {
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        T += delta * 0.0035;
+
+        clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => {
+          T = Math.round(T);
+        }, 160);
+      } else if (appState === STATE_BOOK) {
+        // Wheel in book flips pages
+        if (e.deltaY > 30) flipPageForward();
+        else if (e.deltaY < -30) flipPageBackward();
+      }
+    }, { passive: true });
+
+    // Click Detection
+    window.addEventListener('click', (e) => {
+      if (hasDragged) return;
+      if (e.target.closest('.top-sanctum-bar') || e.target.closest('.era-tabs-container') || e.target.closest('.shelf-nav-arrows') || e.target.closest('.book-reader-hud') || e.target.closest('.landing-overlay') || e.target.closest('.sanctum-modal-backdrop')) {
+        return;
+      }
+
+      if (appState === STATE_SHELF) {
+        raycaster.setFromCamera(pointer3D, camera);
+        const intersects = raycaster.intersectObjects(bookObjects);
+
+        if (intersects.length > 0) {
+          const clickedMesh = intersects[0].object;
+          const clickedIdx = clickedMesh.userData.bookIndex;
+          let r = ((clickedIdx - s) % 32 + 48) % 32 - 16;
+
+          if (Math.abs(r) < 0.5) {
+            // Click active open book -> OPENS PHYSICAL 3D BOOK WITH SPREADS!
+            openPhysical3DBook(clickedIdx);
+          } else {
+            // Glide shelf to this book
+            T = Math.round(T + r);
+            audioSanctum.playHarpPluck(clickedIdx);
+          }
+        }
+      } else if (appState === STATE_BOOK) {
+        // Clicking right half flips forward, left half flips backward
+        if (e.clientX > window.innerWidth / 2) {
+          flipPageForward();
+        } else {
+          flipPageBackward();
+        }
+      }
+    });
+
+    // Arrow Nav Buttons
+    document.getElementById('arrow-prev').addEventListener('click', () => { T = Math.round(T) - 1; });
+    document.getElementById('arrow-next').addEventListener('click', () => { T = Math.round(T) + 1; });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const activeModal = document.querySelector('.sanctum-modal-backdrop.active');
+        if (activeModal) {
+          closeAllModals();
+          return;
+        }
+        if (appState === STATE_BOOK) closePhysical3DBook();
+      } else if (e.key === 'ArrowRight') {
+        if (appState === STATE_SHELF) T = Math.round(T) + 1;
+        else if (appState === STATE_BOOK) flipPageForward();
+      } else if (e.key === 'ArrowLeft') {
+        if (appState === STATE_SHELF) T = Math.round(T) - 1;
+        else if (appState === STATE_BOOK) flipPageBackward();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        if (document.querySelector('.sanctum-modal-backdrop.active')) return;
+        if (appState === STATE_MANDALA) {
+          transitionMandalaToShelf();
+        } else if (appState === STATE_SHELF) {
+          const active = ((Math.round(s) % 32) + 32) % 32;
+          openPhysical3DBook(active);
+        }
+      }
+    });
+
+    /* ==========================================================================
+       16. MAIN ANIMATION & RENDERING LOOP
+       ========================================================================== */
+    let lastTime = performance.now();
+
+    function animate(currentTime) {
+      requestAnimationFrame(animate);
+
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
+      lastTime = currentTime;
+
+      // 1. Smooth cursor
+      curCursorX += (rawMouseX - curCursorX) * (1 - Math.exp(-16 * dt));
+      curCursorY += (rawMouseY - curCursorY) * (1 - Math.exp(-16 * dt));
+      customCursor.style.transform = `translate3d(${curCursorX}px, ${curCursorY}px, 0)`;
+
+      // 2. STATE 0: CIRCULAR MANDALA LOGIC
+      if (appState === STATE_MANDALA) {
+        mandalaRingsGroup.visible = true;
+
+        // Rotate the 3D Yantra rings with subtle differential celestial speeds
+        ring3DInner.rotation.z += mandalaSpinVelocity * 0.7;
+        ring3DMid.rotation.z -= mandalaSpinVelocity * 0.5;
+        ring3DOuter.rotation.z += mandalaSpinVelocity * 0.9;
+
+        // Scale the concentric rings to expand in perfect sync with the books during transition!
+        const ringScale = (mandalaTargetRadius / 1.82);
+        mandalaRingsGroup.scale.set(ringScale, ringScale, ringScale);
+
+        // Tidy, pristine circular ring of books concentric with the Yantra rings!
+        bookObjects.forEach((mesh, idx) => {
+          const u = mesh.userData;
+          u.mandalaAngle += mandalaSpinVelocity;
+
+          // Smoothly interpolate current radius toward mandalaTargetRadius
+          u.mandalaCurrentRadius += (mandalaTargetRadius - u.mandalaCurrentRadius) * (1 - Math.exp(-8 * dt));
+
+          const radius = u.mandalaCurrentRadius;
+          const x = Math.cos(u.mandalaAngle) * radius;
+          const y = Math.sin(u.mandalaAngle) * radius;
+          const z = 0.01; // Sits neatly in the plane with the Yantra rings
+
+          mesh.position.set(x, y, z);
+
+          // Both rings and books share the EXACT same concentric circle!
+          // Align book upright along radial spoke with front cover visible
+          const radialAngle = u.mandalaAngle;
+          mesh.rotation.set(0, 0, radialAngle - Math.PI / 2);
+          mesh.scale.set(0.68, 0.68, 0.68);
+          mesh.visible = true;
+
+          if (u.spineMat) u.spineMat.color.setScalar(1.0);
+          if (u.coverMat) u.coverMat.color.setScalar(0.95);
+        });
+
+        camera.position.set(0, 0, 6.4);
+        camera.lookAt(0, 0, 0);
+        customCursor.className = 'custom-cursor';
+      }
+
+      // 3. STATE 1: PHYSICAL SHELF LOGIC (LEON VASARI MOTION)
+      else if (appState === STATE_SHELF) {
+        mandalaRingsGroup.visible = false;
+        // Reset scale back to 1.0 for shelf
+        bookObjects.forEach(mesh => mesh.scale.set(1.0, 1.0, 1.0));
+        const springK = isDragging ? 18.0 : 6.0;
+        s += (T - s) * (1 - Math.exp(-springK * dt));
+
+        if (Math.abs(s) > 128) {
+          const loopShift = Math.floor(s / 32) * 32;
+          s -= loopShift; T -= loopShift;
+        }
+
+        const newActive = ((Math.round(s) % 32) + 32) % 32;
+        if (newActive !== activeFilmIndex) {
+          const dir = T >= s ? 1 : -1;
+          activeFilmIndex = newActive;
+          updateCaption(activeFilmIndex, dir);
+          audioSanctum.playHarpPluck(activeFilmIndex);
+        }
+
+        raycaster.setFromCamera(pointer3D, camera);
+        const intersects = raycaster.intersectObjects(bookObjects);
+        hoveredIndex = -1;
+        if (intersects.length > 0) {
+          hoveredIndex = intersects[0].object.userData.bookIndex;
+        }
+
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const dxCenter = Math.abs(rawMouseX - centerX);
+        const dyCenter = Math.abs(rawMouseY - centerY);
+        const onCoverNow = (dxCenter < 140 && dyCenter < 180 && Math.abs(T - s) < 0.4);
+
+        if (onCoverNow) {
+          customCursor.className = 'custom-cursor state-open';
+          const targetTiltY = ((rawMouseX - centerX) / 140) * 0.16;
+          const targetTiltX = -((rawMouseY - centerY) / 180) * 0.10;
+          tiltY += (targetTiltY - tiltY) * (1 - Math.exp(-7 * dt));
+          tiltX += (targetTiltX - tiltX) * (1 - Math.exp(-7 * dt));
+        } else {
+          tiltY += (0 - tiltY) * (1 - Math.exp(-7 * dt));
+          tiltX += (0 - tiltX) * (1 - Math.exp(-7 * dt));
+          customCursor.className = hoveredIndex !== -1 ? 'custom-cursor state-spine' : 'custom-cursor';
+        }
+
+        bookObjects.forEach((mesh, i) => {
+          const u = mesh.userData;
+          let r = ((i - s) % 32 + 48) % 32 - 16;
+
+          if (Math.abs(r) > 13) {
+            mesh.visible = false;
+            return;
+          }
+          mesh.visible = true;
+
+          const o = smoothstep(Math.max(0, 1 - Math.abs(r)));
+          const posX = F(r);
+
+          const isHoveredSpine = (hoveredIndex === i && Math.abs(r) >= 0.5);
+          u.hoverLiftTarget = isHoveredSpine ? 1.0 : 0.0;
+          u.hoverLift += (u.hoverLiftTarget - u.hoverLift) * (1 - Math.exp(-12 * dt));
+
+          const rotY = -Math.PI / 2 * o + (o > 0.1 ? tiltY * o : 0);
+          const rotZ = -0.0785 * o;
+          const rotX = o > 0.1 ? tiltX * o : 0;
+          const posZ = o * 0.28 * H;
+          const posY = -o * 0.025 * H + u.hoverLift * 0.065 * H;
+
+          mesh.position.set(posX, posY, posZ);
+          mesh.rotation.set(rotX, rotY, rotZ);
+
+          if (u.spineMat) u.spineMat.color.setScalar(1.0 - o * 0.55);
+          if (u.coverMat) u.coverMat.color.setScalar(0.55 + o * 0.45);
+        });
+
+        camera.position.set(0, 0.05, 6.4);
+        camera.lookAt(0, 0, 0);
+      }
+
+      // 4. STATE 2: 3D BOOK READING LOGIC (NATURAL FLIPPING ANIMATION & 3D CYLINDER CURL)
+      else if (appState === STATE_BOOK) {
+        // Shelf books fade back slightly
+        bookObjects.forEach(mesh => {
+          mesh.position.z = -3.5;
+        });
+
+        if (isPageFlipping) {
+          // Smooth sinusoidal ease
+          const easedP = easeInOutSine(flipProgress);
+
+          let currentRotY;
+          if (flipDirection === 1) {
+            // Forward flip: 0 to -Math.PI
+            currentRotY = -easedP * Math.PI;
+          } else {
+            // Backward flip: -Math.PI to 0
+            currentRotY = -Math.PI + easedP * Math.PI;
+          }
+
+          turnLeafPivot.rotation.y = currentRotY;
+
+          // 3D Paper Curl deformation:
+          // Maximum flex when page is standing halfway up (sin(easedP * PI))
+          const archHeight = Math.sin(easedP * Math.PI);
+          const curlFactor = archHeight * 0.35; // natural paper bend
+
+          const posAttr = turnLeafGeom.attributes.position;
+          for (let j = 0; j < posAttr.count; j++) {
+            const vx = posAttr.getX(j);
+            const normX = vx / leafW; // 0 at spine, 1 at outer page edge
+            // Wave curl across width
+            const bendZ = Math.sin(normX * Math.PI * 0.95) * curlFactor;
+            posAttr.setZ(j, bendZ);
+          }
+          posAttr.needsUpdate = true;
+        }
+
+        // Camera distance framing ~80% of entire screen!
+        camera.position.set(0, 0, 5.85);
+        camera.lookAt(0, -0.05, 0);
+        customCursor.className = 'custom-cursor';
+      }
+
+      // Celestial dust update
+      const positions = dustParticles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3 + 1] += particleSpeeds[i];
+        if (positions[i * 3 + 1] > 5) positions[i * 3 + 1] = -4;
+        positions[i * 3] += Math.sin(currentTime * 0.001 + i) * 0.002;
+      }
+      dustParticles.geometry.attributes.position.needsUpdate = true;
+
+      diyaLight.intensity = 4.2 + Math.sin(currentTime * 0.008) * 0.35 + (Math.random() - 0.5) * 0.15;
+
+      renderer.render(scene, camera);
+    }
+
+    requestAnimationFrame(animate);
+
+    // Responsive resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    // Re-bake textures on font load
+    if (document.fonts) {
+      document.fonts.ready.then(() => {
+        bookObjects.forEach((mesh, i) => {
+          const book = BOOKS_CATALOG[i];
+          const newSpineTex = new THREE.CanvasTexture(generateSpineTextureCanvas(book));
+          newSpineTex.anisotropy = 4;
+          mesh.material[4].map = newSpineTex;
+          mesh.material[4].needsUpdate = true;
+
+          const newCoverTex = new THREE.CanvasTexture(generateFrontCoverTextureCanvas(book));
+          newCoverTex.anisotropy = 4;
+          mesh.material[0].map = newCoverTex;
+          mesh.material[0].needsUpdate = true;
+        });
+        renderAncientCrinkledParchment();
+      });
+    }
+
+    // Hide loader
+    document.getElementById('loader-fill').style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('loading-curtain').classList.add('hidden');
+    }, 600);
+  </script>
+</body>
+</html>
